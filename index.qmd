@@ -38,8 +38,10 @@ instead of warnings that scroll by.
 - The demo project's eight objects are all **predicted** by the classifier, none validated. The OBIS notebook
   therefore opts in to predicted objects (`include_predicted = TRUE`) and the archive carries
   `identificationVerificationStatus = predicted` on every occurrence. A real publication would not.
-- Four of its six categories (`detritus`, `other`, `egg`, `t001`) are morphological and are excluded by rule;
-  two (`Cyclopoida`, `Oncaeidae`) carry an AphiaID in the node's taxonomy and publish.
+- EcoTaxa's taxonomy is WoRMS since its 2026 major version, so the two phylogenetic categories
+  (`Cyclopoida`, `Oncaeidae`) carry an AphiaID and publish. The four morphological ones (`detritus`,
+  `other`, `egg`, `t001`) are excluded by rule; EcoTaxa's own mapping would publish `egg` and `other` as
+  Biota and drop the other two (notebook 02 shows the cross-check).
 - The NERC P01 ids in `metadata/measurement_type.csv` are filled only where the concept is exact; most are empty
   on purpose and show up as `no_measurement_type_id` warnings.
 - The NCEI package layout and route are a proposal to agree with NCEI, not an NCEI specification.

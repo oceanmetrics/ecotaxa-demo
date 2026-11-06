@@ -19,3 +19,14 @@ test_that("ecotaxa_datetime() builds ISO 8601 UTC and tolerates a missing time",
   expect_equal(ecotaxa_datetime("20140701", NA), "2014-07-01")
   expect_equal(ecotaxa_datetime(NA, "103005"), NA_character_)
 })
+test_that("parse_wormsification() recovers EcoTaxa's own mapping: phylo to itself, morpho to nearest living ancestor, none for non-living", {
+  # the answer /api/taxon_set/wormsification gave on 2026-11-06 for the demo project's categories
+  w <- list(`1` = list(id = 1, display_name = "Biota", type = "P", aphia_id = 1),
+            `45072` = list(id = 45072, display_name = "Cyclopoida", type = "P", aphia_id = 1101),
+            `78418` = list(id = 78418, display_name = "Oncaeidae", type = "P", aphia_id = 128586))
+  ids <- c(45072L, 78418L, 84963L, 85011L, 85012L, 85078L)
+  m <- parse_wormsification(w, ids, taxa = fixture_taxa())
+  expect_equal(m$maps_to_aphia_id, c(1101L, 128586L, NA, 1L, NA, 1L))
+  expect_equal(m$maps_to_name[m$ecotaxa_id == 85078], "Biota")      # egg<other lands on Biota
+  expect_true(is.na(m$maps_to_id[m$ecotaxa_id == 84963]))             # detritus: no solution
+})

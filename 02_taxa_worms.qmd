@@ -16,6 +16,16 @@ flowchart LR
   classDef store fill:#f3f0ea,stroke:#a08c6a,color:#3a2e1c
 ```
 
+## EcoTaxa's taxonomy is WoRMS now
+
+Since its 2026 major version EcoTaxa [uses the WoRMS taxonomy](https://ecotaxa.obs-vlfr.fr/): every
+phylogenetic category carries an AphiaID and a WoRMS lineage, deprecated categories were remapped
+(Ifremer publishes the list), and the API has a `taxon_set/wormsification` call that maps any category,
+morphological ones included, to its nearest WoRMS taxon. The TSV export still carries the category's name,
+EcoTaxa id and lineage rather than the AphiaID, so this notebook resolves each distinct category once,
+through the node's taxonomy, into a table a person can review. EcoTaxa's own mapping is shown beside the
+decision as a cross-check.
+
 ## Rules
 
 | Category | Rule | Result |
@@ -57,6 +67,25 @@ lookup  <- taxa_worms_fill(decided)
 write_taxa_lookup(lookup, LOOKUP_CSV)
 lookup |> select(ecotaxa_id, ecotaxa_name, decision, aphia_id, scientific_name, rank, status, note)
 ```
+
+## Cross-check against EcoTaxa's own mapping
+
+```{r}
+#| label: wormsification
+own <- ecotaxa_wormsification(used)
+lookup |>
+  select(ecotaxa_id, ecotaxa_name, decision, aphia_id, scientific_name) |>
+  left_join(own, by = "ecotaxa_id") |>
+  mutate(agrees = case_when(
+    decision == "excluded" & is.na(maps_to_aphia_id) ~ "yes: both drop it",
+    decision == "excluded" & maps_to_aphia_id == 1   ~ "no: EcoTaxa publishes it as Biota",
+    aphia_id == maps_to_aphia_id                     ~ "yes",
+    TRUE                                             ~ "no"))
+```
+
+The one disagreement is deliberate: EcoTaxa's rule sends a morphological category to its nearest
+phylogenetic ancestor whatever that is, so `egg<other` becomes an occurrence of Biota; this pipeline
+excludes it, because an occurrence of "life" tells OBIS nothing.
 
 ```{r}
 #| label: summary

@@ -163,3 +163,40 @@ read_ecotaxa_export <- function(paths) {
   stopifnot(length(paths) > 0)
   dplyr::bind_rows(lapply(paths, read_ecotaxa_tsv))
 }
+
+# EcoTaxa's own WoRMS mapping (since the 2026 major version the taxonomy IS WoRMS): for a
+# set of category ids, GET /api/taxon_set/wormsification returns the taxa reached by
+# "phylo -> itself when it has an aphia_id, else its rename target; morpho -> nearest
+# non-morpho ancestor" (py/BO/WoRMSification.py). a category with no solution is absent
+# from the answer. used as a cross-check of taxa_decide(), not as the rule.
+ecotaxa_wormsification <- function(ids, base = ecotaxa_url()) {
+  ids <- unique(as.integer(ids))
+  if (!length(ids)) return(tibble::tibble(ecotaxa_id = integer(), maps_to_id = integer(),
+                                          maps_to_name = character(), maps_to_aphia_id = integer()))
+  w <- ecotaxa_get("taxon_set/wormsification", ids = paste(ids, collapse = ","), base = base)
+  parse_wormsification(w, ids)
+}
+# the answer is keyed by the id of the TARGET taxon; a requested id maps to the target whose
+# id equals it (phylo) or whose children/lineage covers it. the API gives no explicit
+# from -> to pairs, so the mapping is recovered through id_lineage: a requested morpho id maps
+# to the first returned non-morpho taxon in its lineage, a phylo id to itself when returned.
+parse_wormsification <- function(w, ids, taxa = NULL) {
+  tg <- lapply(w, function(x) tibble::tibble(
+    id = as.integer(x$id), name = x$display_name, type = x$type,
+    aphia_id = if (is.null(x$aphia_id)) NA_integer_ else as.integer(x$aphia_id)))
+  tg <- dplyr::bind_rows(tg)
+  if (is.null(taxa)) taxa <- ecotaxa_taxa(ids)
+  out <- lapply(ids, function(i) {
+    t <- taxa[taxa$ecotaxa_id == i, ]
+    if (!nrow(t)) return(NULL)
+    lin <- as.integer(strsplit(t$id_lineage, ",", fixed = TRUE)[[1]])
+    # lineage is root -> self; walk from self upwards
+    hit <- NA_integer_
+    for (a in rev(lin)) if (a %in% tg$id && (a == i || tg$type[tg$id == a] != "M")) { hit <- a; break }
+    tibble::tibble(ecotaxa_id = i,
+                   maps_to_id = hit,
+                   maps_to_name = if (is.na(hit)) NA_character_ else tg$name[tg$id == hit],
+                   maps_to_aphia_id = if (is.na(hit)) NA_integer_ else tg$aphia_id[tg$id == hit])
+  })
+  dplyr::bind_rows(out)
+}

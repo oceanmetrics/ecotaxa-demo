@@ -1,10 +1,14 @@
 # taxa.R: resolve EcoTaxa categories to WoRMS, as a reviewable lookup table
 #
-# an EcoTaxa category is either phylogenetic (type P, usually with an aphia_id synced from
-# EcoTaxoServer) or morphological (type M: detritus, egg, t001, "other", ...). the TSV export
-# carries the category name and id but no AphiaID. the rules below decide, per category, and
-# the result is a CSV a taxonomist reviews (metadata/taxa_lookup.csv). nothing is guessed
-# silently: a category that resolves to nothing is `unresolved`, and the OBIS notebook stops on it.
+# since its 2026 major version EcoTaxa's taxonomy IS WoRMS: a phylogenetic category (type P)
+# carries an aphia_id and a WoRMS lineage; a morphological one (type M: detritus, egg, t001,
+# "other", ...) carries none. the TSV export carries the category name, id and lineage, not the
+# AphiaID, so each distinct category is resolved once through the node's taxonomy. the rules
+# below decide per category and the result is a CSV a taxonomist reviews
+# (metadata/taxa_lookup.csv). they differ from EcoTaxa's own wormsification in one place: a
+# morphological category whose nearest living ancestor is only Biota is excluded here, where
+# EcoTaxa's DwC export publishes it as Biota. nothing is guessed silently: a category that
+# resolves to nothing is `unresolved`, and the OBIS notebook stops on it.
 
 # roots of the EcoTaxa tree that can never be an occurrence
 TAXA_NONLIVING_ROOTS <- c("not-living", "temporary")
