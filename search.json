@@ -1,0 +1,198 @@
+[
+  {
+    "objectID": "04_archive_to-ncei.html",
+    "href": "04_archive_to-ncei.html",
+    "title": "04 Assemble the archive package for NCEI",
+    "section": "",
+    "text": "flowchart LR\n  subgraph src[\"Inputs (per EcoTaxa project, dated version)\"]\n    direction TB\n    IMG[\"images\\n(vault, one file per object)\"]\n    TSV[\"EcoTaxa TSV export\\n(objects, samples, acquisitions, process)\"]\n    DWCA[\"DwC-A zip\\n(from the OBIS pipeline)\"]\n    MD[\"project metadata\\n(EML, contacts, license, instrument)\"]\n  end\n  IMG & TSV & DWCA & MD --&gt; B[\"04 build package\\nBagIt-style layout\\nmanifest + SHA-256 checksums\\nISO 19115-2 / ACDD metadata record\\nversion YYYY-MM-DD\"]\n  B --&gt; V[\"verify\\nre-hash, count, schema checks\"]\n  V --&gt; ST[(\"staging copy\\nobject storage (R2 / NODD)\")]\n  ST --&gt; SUB[\"NCEI submission\\n(S2N / ATRAC: route to agree\\nwith NCEI and Matt Biddle)\"]\n  SUB --&gt; ACC[\"NCEI accession\\nDOI, landing page\"]\n  ACC -.-&gt;|\"DOI back into\"| DWCA\n  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;\n  classDef prop fill:#fff8e1,stroke:#b8860b,color:#3a2e00;\n  class ACC ext;\n  class SUB prop;"
+  },
+  {
+    "objectID": "04_archive_to-ncei.html#status",
+    "href": "04_archive_to-ncei.html#status",
+    "title": "04 Assemble the archive package for NCEI",
+    "section": "Status",
+    "text": "Status\nThe package layout below is a proposal to agree with NCEI and with Matt Biddle and Enrique Montes, who are already working on NCEI publication of EcoTaxa data (the SECOORA LOI also names FathomNet in that work). It is BagIt-style because a checksummed, self-describing bag survives any transport. Which route NCEI prefers (Send2NCEI for a one-off, ATRAC with a submission agreement for a recurring flow, or a FathomNet-mediated path) and which metadata profile the imaging pipeline requires are the first questions for them; nothing here is an NCEI decision, and nothing here submits.\n\n\nCode\nlibrarian::shelf(dplyr, readr, tibble, jsonlite, digest, here, quiet = TRUE)\nfor (f in list.files(here(\"R\"), pattern = \"\\\\.R$\", full.names = TRUE)) source(f)\nPROJECT_ID  &lt;- 2L\nDATASET_KEY &lt;- paste0(\"ecotaxa-om-prj\", PROJECT_ID)\nVERSION     &lt;- format(Sys.Date())\nDIR_EXPORT  &lt;- here(\"data/export\", paste0(\"project-\", PROJECT_ID))\nDIR_DWCA    &lt;- here(\"data/darwincore\", DATASET_KEY)\nDIR_NCEI    &lt;- here(\"data/ncei\")\nexport_info &lt;- fromJSON(file.path(DIR_EXPORT, \"export.json\"))\nstr(export_info)\n\n\nList of 6\n $ project_id  : int 2\n $ source      : chr \"data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)\"\n $ tsv         : chr [1:2] \"ecotaxa_m106_mn01_n1_sml.tsv\" \"ecotaxa_m106_mn01_n2_sml.tsv\"\n $ n_objects   : int 8\n $ exported_utc: chr \"2026-11-06T12:47:17Z\"\n $ image_dir   : chr \"/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data-raw/import_test\""
+  },
+  {
+    "objectID": "04_archive_to-ncei.html#inputs-one-project-at-one-dated-version",
+    "href": "04_archive_to-ncei.html#inputs-one-project-at-one-dated-version",
+    "title": "04 Assemble the archive package for NCEI",
+    "section": "Inputs: one project at one dated version",
+    "text": "Inputs: one project at one dated version\n\n\nCode\ntsv_paths &lt;- list.files(export_info$image_dir, pattern = \"\\\\.tsv$\", recursive = TRUE, full.names = TRUE)\ndwca_zip  &lt;- file.path(DIR_DWCA, paste0(DATASET_KEY, \"_\", VERSION, \".zip\"))\neml_path  &lt;- file.path(DIR_DWCA, \"eml.xml\")\nstopifnot(file.exists(dwca_zip), file.exists(eml_path), length(tsv_paths) &gt; 0)\nmanifest  &lt;- fromJSON(file.path(DIR_DWCA, paste0(DATASET_KEY, \"_\", VERSION, \"_manifest.json\")))\nbasename(c(tsv_paths, dwca_zip, eml_path))\n\n\n[1] \"ecotaxa_m106_mn01_n1_sml.tsv\"   \"ecotaxa_m106_mn01_n2_sml.tsv\"  \n[3] \"ecotaxa-om-prj2_2026-11-06.zip\" \"eml.xml\""
+  },
+  {
+    "objectID": "04_archive_to-ncei.html#build-the-bag",
+    "href": "04_archive_to-ncei.html#build-the-bag",
+    "title": "04 Assemble the archive package for NCEI",
+    "section": "Build the bag",
+    "text": "Build the bag\n\n\nCode\nb &lt;- ncei_package(DIR_NCEI, DATASET_KEY, VERSION, tsv_paths = tsv_paths, image_dir = export_info$image_dir,\n                  dwca_zip = dwca_zip, eml_path = eml_path,\n                  dataset_json = list(\n                    organization = \"Ocean Metrics\",\n                    title = \"US EcoTaxa demo, project 2 (Zooscan test set)\",\n                    source_project_url = paste0(ecotaxa_url(), \"/prj/\", PROJECT_ID),\n                    dwca_content_hash = manifest$content_hash,\n                    instrument = \"Zooscan\",\n                    instrument_vocab = \"http://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/\",\n                    verification = \"classifier predictions only; no validated object in this demo project\",\n                    license = \"CC BY 4.0 (demo)\"))\nstr(b)\n\n\nList of 4\n $ bag      : chr \"/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/ncei/ecotaxa-om-prj2_2026-11-06\"\n $ n_payload: int 13\n $ bytes    : num 48992\n $ n_images : int 8\n\n\nCode\ncat(list.files(b$bag, recursive = TRUE), sep = \"\\n\")\n\n\nbag-info.txt\nbagit.txt\ndata/dwca/ecotaxa-om-prj2_2026-11-06.zip\ndata/ecotaxa_export/ecotaxa_m106_mn01_n1_sml.tsv\ndata/ecotaxa_export/ecotaxa_m106_mn01_n2_sml.tsv\ndata/images/m106_mn01_n1_sml/m106_mn01_n1_sml_409.jpg\ndata/images/m106_mn01_n1_sml/m106_mn01_n1_sml_821.jpg\ndata/images/m106_mn01_n1_sml/m106_mn01_n1_sml_822.jpg\ndata/images/m106_mn01_n1_sml/m106_mn01_n1_sml_850.jpg\ndata/images/m106_mn01_n1_sml/m106_mn01_n1_sml_851.jpg\ndata/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1.jpg\ndata/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1081.jpg\ndata/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1111.jpg\ndata/metadata/dataset.json\ndata/metadata/eml.xml\nmanifest-sha256.txt\ntagmanifest-sha256.txt\n\n\n\n\nCode\ncat(readLines(file.path(b$bag, \"bag-info.txt\")), sep = \"\\n\")\n\n\nSource-Organization: Ocean Metrics\nExternal-Identifier: ecotaxa-om-prj2_2026-11-06\nBagging-Date: 2026-11-06\nPayload-Oxum: 48992.13\nBag-Size: 0.05 MB\nExternal-Description: EcoTaxa project export (images, TSV, Darwin Core Archive, metadata) from https://ecotaxa.oceanmetrics.io\n\n\nCode\ncat(readLines(file.path(b$bag, \"manifest-sha256.txt\")), sep = \"\\n\")\n\n\nd4ba3b7571f58a5cbe49546803d6339063dd2aef62339fdad20b9f7099b8643a data/dwca/ecotaxa-om-prj2_2026-11-06.zip\na4d213431182a3e789c3acc144f37566b8021fc819ac08314b11723fb2aca599 data/ecotaxa_export/ecotaxa_m106_mn01_n1_sml.tsv\nc3853fd7c7772ab003880964af8a94d4e4c741063fb3c3ff0f9d8772752d0580 data/ecotaxa_export/ecotaxa_m106_mn01_n2_sml.tsv\nb1fa990e5506362e9800f5c680f5fc91861ad8e648731b39e2a2e00fe6447a51 data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_409.jpg\n81b580aae43a8fa6c92a1ce5573ad08b2f82cff5e551b4156654b62b345ae50c data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_821.jpg\nc306d6cf252c643d30768bf289bf482c44a6c4ecf8660a89463e91a4e2023466 data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_822.jpg\n4a1e872eab999fbd958bf58a9dfb45d771197b7d087284e6f1bfb06fdb11ef0c data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_850.jpg\n9daeecb3f2d9cbd43a9fe7497976b7b8b48b0a9a402a3b439241791284b92c5f data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_851.jpg\n49c177d9947596053b66dad8537920926c7232ce5ed8416c8f842c1aeb9ae102 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1.jpg\n230b403667dbb197969c20e3eb0ded7a58f42a9322486e1fa421695ff5f69fcd data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1081.jpg\n7d297b65336d3750341dbec2ce75e77fe6dc2f6bc722fb62585d282a89152d75 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1111.jpg\nd7babaa9c8f2b802bd23e8341a8de31be291aceb676f57d7eb0fd47d6a68372a data/metadata/dataset.json\n1ad935417deaeb4f6806e0c5b35b56e86b5d9952704bf2b7685f3268cc2ca7ad data/metadata/eml.xml"
+  },
+  {
+    "objectID": "04_archive_to-ncei.html#verify",
+    "href": "04_archive_to-ncei.html#verify",
+    "title": "04 Assemble the archive package for NCEI",
+    "section": "Verify",
+    "text": "Verify\n\n\nCode\nncei_verify(b$bag)\n\n\n\n\n\n\nfinding\npath\n\n\n\n\nok\nNA\n\n\n\n\n\n\nCode\nstopifnot(identical(ncei_verify(b$bag)$finding, \"ok\"))"
+  },
+  {
+    "objectID": "04_archive_to-ncei.html#what-a-submission-would-then-look-like-assumption-to-agree",
+    "href": "04_archive_to-ncei.html#what-a-submission-would-then-look-like-assumption-to-agree",
+    "title": "04 Assemble the archive package for NCEI",
+    "section": "What a submission would then look like (assumption, to agree)",
+    "text": "What a submission would then look like (assumption, to agree)\n\nCopy the bag to the staging bucket (egress-free object storage; a public copy via NODD if NOAA wants one), under ecotaxa/{dataset_key}/{version}/.\nSend NCEI the bag’s location and bag-info.txt through the agreed route (S2N for a pilot; ATRAC with a submission agreement for the recurring flow). The ISO 19115-2 record NCEI needs would be generated from the same EML with NCEI’s template once the profile is agreed; data/metadata/dataset.json holds the ACDD-style attributes it would draw on.\nOn accession, write the accession number and DOI back into the project’s EML, so the next DwC-A version cites the archived copy.\nA re-validation or a new cruise makes a new version; a submitted version is never edited."
+  },
+  {
+    "objectID": "02_taxa_worms.html",
+    "href": "02_taxa_worms.html",
+    "title": "02 Categories to WoRMS",
+    "section": "",
+    "text": "flowchart LR\n  C[\"categories used by the project\\n(taxo_stats.used_taxa)\"] --&gt; T[\"node taxonomy\\n/api/taxon_set/query\\ntype P or M, aphia_id, lineage\"]\n  T --&gt; D[\"taxa_decide()\\naphia | name_match | ancestor | excluded\"]\n  D --&gt; W[\"taxa_worms_fill()\\nworrms by AphiaID or exact name\\nvalid name, rank, lineage, LSID\"]\n  W --&gt; L[(\"metadata/taxa_lookup.csv\\nreviewed by a taxonomist\")]\n  L --&gt; O[\"03 OBIS: assert_taxa_resolved()\"]"
+  },
+  {
+    "objectID": "02_taxa_worms.html#rules",
+    "href": "02_taxa_worms.html#rules",
+    "title": "02 Categories to WoRMS",
+    "section": "Rules",
+    "text": "Rules\n\n\n\n\n\n\n\n\nCategory\nRule\nResult\n\n\n\n\nroot not-living or temporary (detritus&lt;not-living, t001)\nnever an occurrence\nexcluded\n\n\nphylogenetic (type P) with an aphia_id on the node\nuse it, verify in WoRMS, publish under the valid name\naphia\n\n\nphylogenetic without an aphia_id\nexact name match in WoRMS; no hit stops the build\nname_match / unresolved\n\n\nmorphological under Biota (egg&lt;other, nauplii&lt;Cyclopoida)\nnearest ancestor with an aphia_id, unless it is only Biota\nancestor / excluded\n\n\n\nThe decision is pure and tested without the network (tests/testthat/test-taxa.R); WoRMS is injected, so the same code runs against a canned WoRMS in the tests and against worrms here.\n\n\nCode\nlibrarian::shelf(worrms, dplyr, readr, tibble, here, quiet = TRUE)\nfor (f in list.files(here(\"R\"), pattern = \"\\\\.R$\", full.names = TRUE)) source(f)\nPROJECT_ID &lt;- 2L\nLOOKUP_CSV &lt;- here(\"metadata/taxa_lookup.csv\")"
+  },
+  {
+    "objectID": "02_taxa_worms.html#the-nodes-own-taxonomy-for-the-categories-in-use",
+    "href": "02_taxa_worms.html#the-nodes-own-taxonomy-for-the-categories-in-use",
+    "title": "02 Categories to WoRMS",
+    "section": "The node’s own taxonomy for the categories in use",
+    "text": "The node’s own taxonomy for the categories in use\n\n\nCode\nused &lt;- ecotaxa_project_taxo_stats(PROJECT_ID)$used_taxa\ntaxa &lt;- ecotaxa_taxa(used)\n# the ancestors too, so a morphological category can be re-parented onto a living one\nanc  &lt;- setdiff(as.integer(unlist(strsplit(taxa$id_lineage, \",\"))), taxa$ecotaxa_id)\ntaxa &lt;- bind_rows(taxa, ecotaxa_taxa(anc)) |&gt; distinct(ecotaxa_id, .keep_all = TRUE)\ntaxa |&gt; filter(ecotaxa_id %in% used) |&gt; select(ecotaxa_id, display_name, type, rank, aphia_id, lineage)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\necotaxa_id\ndisplay_name\ntype\nrank\naphia_id\nlineage\n\n\n\n\n45072\nCyclopoida\nP\nOrder\n1101\nBiota &gt; Animalia &gt; Arthropoda &gt; Crustacea &gt; Multicrustacea &gt; Copepoda &gt; Neocopepoda &gt; Podoplea &gt; Cyclopoida\n\n\n78418\nOncaeidae\nP\nFamily\n128586\nBiota &gt; Animalia &gt; Arthropoda &gt; Crustacea &gt; Multicrustacea &gt; Copepoda &gt; Neocopepoda &gt; Podoplea &gt; Cyclopoida &gt; Ergasilida &gt; Oncaeidae\n\n\n84963\ndetritus&lt;not-living\nM\nNA\nNA\nnot-living &gt; detritus\n\n\n85011\nother&lt;Biota\nM\nNA\nNA\nBiota &gt; other\n\n\n85012\nt001\nM\nNA\nNA\ntemporary &gt; t001\n\n\n85078\negg&lt;other\nM\nNA\nNA\nBiota &gt; other &gt; egg"
+  },
+  {
+    "objectID": "02_taxa_worms.html#decide-then-fill-from-worms",
+    "href": "02_taxa_worms.html#decide-then-fill-from-worms",
+    "title": "02 Categories to WoRMS",
+    "section": "Decide, then fill from WoRMS",
+    "text": "Decide, then fill from WoRMS\n\n\nCode\ndecided &lt;- taxa_decide(taxa) |&gt; filter(ecotaxa_id %in% used)\nlookup  &lt;- taxa_worms_fill(decided)\nwrite_taxa_lookup(lookup, LOOKUP_CSV)\nlookup |&gt; select(ecotaxa_id, ecotaxa_name, decision, aphia_id, scientific_name, rank, status, note)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\necotaxa_id\necotaxa_name\ndecision\naphia_id\nscientific_name\nrank\nstatus\nnote\n\n\n\n\n45072\nCyclopoida\naphia\n1101\nCyclopoida\nOrder\naccepted\naphia_id from the EcoTaxa taxonomy\n\n\n78418\nOncaeidae\naphia\n128586\nOncaeidae\nFamily\naccepted\naphia_id from the EcoTaxa taxonomy\n\n\n84963\ndetritus&lt;not-living\nexcluded\nNA\nNA\nNA\nNA\nnon-living root: not-living\n\n\n85011\nother&lt;Biota\nexcluded\nNA\nNA\nNA\nNA\nmorphological; nearest living ancestor is Biota (Superdomain)\n\n\n85012\nt001\nexcluded\nNA\nNA\nNA\nNA\nnon-living root: temporary\n\n\n85078\negg&lt;other\nexcluded\nNA\nNA\nNA\nNA\nmorphological; nearest living ancestor is Biota (Superdomain)\n\n\n\n\n\n\n\n\nCode\nlookup |&gt; count(decision)\n\n\n\n\n\n\ndecision\nn\n\n\n\n\naphia\n2\n\n\nexcluded\n4\n\n\n\n\n\n\nmetadata/taxa_lookup.csv is committed: it is the artifact a taxonomist reviews and the one notebook 03 reads. An unresolved row stops notebook 03 until someone edits the CSV (set decision and aphia_id by hand) or fixes the category on the node."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "EcoTaxa to OBIS and NCEI: a working demo",
+    "section": "",
+    "text": "This site is the companion to the brief US EcoTaxa: pipelines to OBIS and NCEI (6 November 2026, a Word document kept with the proposal files). It runs, end to end, on the demo node at ecotaxa.oceanmetrics.io: project 2, “US EcoTaxa demo”, eight Zooscan objects in two samples. Nothing here submits anything to an IPT, to OBIS or to NCEI: the notebooks write files and say what the next, deliberate, human step would be.\nflowchart TB\n  subgraph inst[\"Imaging instruments\"]\n    direction LR\n    I1[\"IFCB\"] ~~~ I2[\"Zooscan / FlowCam\"] ~~~ I3[\"UVP / PlanktoScope\"] ~~~ I4[\"microscopy\"]\n  end\n  subgraph node[\"US EcoTaxa node (national); the SECOORA Hub runs on it\"]\n    direction LR\n    ET[\"EcoTaxa\\nimport, classify, validate\"] --&gt; API[\"REST API\\nTSV export + images\"] --&gt; OBJ[(\"Object storage\\nimages on egress-free storage (R2)\\npublic copy via NODD\")]\n  end\n  subgraph core[\"Shared EcoTaxa to Darwin Core core (one codebase, both nodes)\"]\n    direction LR\n    TX[\"Taxon match\\nEcoTaxa category to WoRMS AphiaID\"] --&gt; DWC[\"Darwin Core\\nEvent + Occurrence + eMoF\\n(+ Audubon Core)\"] --&gt; EML[\"EML + meta.xml\\nDwC-A zip\"]\n  end\n  subgraph out[\"Destinations\"]\n    direction LR\n    IPT[\"OBIS-USA IPT\"] --&gt; OBIS[\"OBIS\"] --&gt; GBIF[\"GBIF\"]\n    PKG[\"Archive package\\nimages + metadata + DwC-A\\nmanifest + checksums\"] --&gt; NCEI[\"NCEI archive\\n(route to agree with NCEI)\"]\n  end\n  inst --&gt; node --&gt; core --&gt; out\n  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;\n  classDef core fill:#e8f5e9,stroke:#2e7d32,color:#1b3a1c;\n  class IPT,OBIS,GBIF,NCEI ext;\n  class TX,DWC,EML core;"
+  },
+  {
+    "objectID": "index.html#the-notebooks",
+    "href": "index.html#the-notebooks",
+    "title": "EcoTaxa to OBIS and NCEI: a working demo",
+    "section": "The notebooks",
+    "text": "The notebooks\n\n\n\nNotebook\nWhat it does\nReusable logic\n\n\n\n\n01 Export\npulls the project through the REST API (token login, general export job, TSV + images), caches it under data/\nR/ecotaxa_api.R\n\n\n02 Taxa\nresolves every EcoTaxa category to WoRMS into a reviewable lookup table, with explicit rules for non-living and morphological categories\nR/taxa.R\n\n\n03 OBIS\nbuilds Event, Occurrence and eMoF, the EML and meta.xml, zips a Darwin Core Archive, validates it (obistools)\nR/dwc.R, R/eml.R\n\n\n04 NCEI\nassembles a BagIt-style archive package (images, TSV, DwC-A, metadata, SHA-256 manifest) and verifies it; describes the submission route as a proposal\nR/ncei.R\n\n\n\nEvery rule in R/ has a testthat test on a small synthetic fixture (tests/testthat/); run them with Rscript tests/run_tests.R. The notebooks call the functions, the tests assert them, so the two cannot drift."
+  },
+  {
+    "objectID": "index.html#where-it-comes-from",
+    "href": "index.html#where-it-comes-from",
+    "title": "EcoTaxa to OBIS and NCEI: a working demo",
+    "section": "Where it comes from",
+    "text": "Where it comes from\nThe structure borrows from the CalCOFI Darwin Core pipeline (publish notebooks, calcofi4db): a term map that drives meta.xml so a column without a term is an error; vocabulary ids filled only on an exact match, never invented; deterministic archives with a content hash; and findings that gate the build instead of warnings that scroll by."
+  },
+  {
+    "objectID": "index.html#honest-limits-of-the-demo",
+    "href": "index.html#honest-limits-of-the-demo",
+    "title": "EcoTaxa to OBIS and NCEI: a working demo",
+    "section": "Honest limits of the demo",
+    "text": "Honest limits of the demo\n\nThe demo project’s eight objects are all predicted by the classifier, none validated. The OBIS notebook therefore opts in to predicted objects (include_predicted = TRUE) and the archive carries identificationVerificationStatus = predicted on every occurrence. A real publication would not.\nFour of its six categories (detritus, other, egg, t001) are morphological and are excluded by rule; two (Cyclopoida, Oncaeidae) carry an AphiaID in the node’s taxonomy and publish.\nThe NERC P01 ids in metadata/measurement_type.csv are filled only where the concept is exact; most are empty on purpose and show up as no_measurement_type_id warnings.\nThe NCEI package layout and route are a proposal to agree with NCEI, not an NCEI specification."
+  },
+  {
+    "objectID": "01_export_ecotaxa.html",
+    "href": "01_export_ecotaxa.html",
+    "title": "01 Export a project from EcoTaxa",
+    "section": "",
+    "text": "flowchart LR\n  subgraph et[\"EcoTaxa (REST API, token login)\"]\n    direction TB\n    P[\"project\\n(instrument, license, contacts)\"]\n    S[\"samples\\n(lat, lon, date, depth, volume)\"]\n    A[\"acquisitions\\n(instrument settings)\"]\n    O[\"objects\\n(category, status validated / predicted,\\nannotator, size features, image)\"]\n    P --&gt; S --&gt; A --&gt; O\n  end\n  O --&gt; X[\"01 export\\nTSV + images\\n(cached locally)\"]\n  X --&gt; W[\"02 taxa\\nEcoTaxa category to WoRMS\\nreviewable lookup table:\\nAphiaID, rank, or excluded\\n(detritus, egg, t001)\"]\n  W --&gt; E[\"03 Event core\\none row per sample (+ acquisition)\\neventID, eventDate, lat/lon, depth,\\nsamplingProtocol, sampleSizeValue\"]\n  W --&gt; OC[\"03 Occurrence\\nvalidated objects aggregated\\nper sample x taxon\\nscientificNameID = WoRMS LSID\\nidentificationVerificationStatus\"]\n  W --&gt; M[\"03 eMoF\\nabundance, concentration,\\nbiovolume, size\\nNERC P01 / P06 URIs\"]\n  W -.-&gt; AC[\"Audubon Core (optional)\\nimage URLs per object\"]\n  E & OC & M & AC --&gt; Z[\"EML + meta.xml\\nDwC-A zip + manifest\\nvalidate (obistools)\"]\n  Z --&gt; IPT[\"OBIS-USA IPT\\n(manual upload)\"] --&gt; OBIS[\"OBIS\"] --&gt; GBIF[\"GBIF\"]\n  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;\n  class IPT,OBIS,GBIF ext;"
+  },
+  {
+    "objectID": "01_export_ecotaxa.html#what-this-does",
+    "href": "01_export_ecotaxa.html#what-this-does",
+    "title": "01 Export a project from EcoTaxa",
+    "section": "What this does",
+    "text": "What this does\nEcoTaxa’s REST API ({ECOTAXA_URL}/api/docs) exposes a general export job: it writes a zip with one TSV per sample (object, sample, acquisition and process fields, plus each object’s category, annotation status, annotator and date) and, optionally, the images. This notebook logs in with a token, starts the job for project 2, waits for it, downloads and unzips it under data/export/, and reads the TSVs into one objects table cached as Parquet. Later notebooks read the cache and never touch the node.\nCredentials come from a git-ignored .Renviron (ECOTAXA_URL, ECOTAXA_USER, ECOTAXA_PASSWORD). When no login is configured, the notebook falls back to the upstream test set in data-raw/import_test/, which is the byte-identical source of project 2’s eight objects (see data-raw/README.md), so the rest of the pipeline still runs on the same data; it says so below.\n\n\nCode\nlibrarian::shelf(httr2, dplyr, readr, tibble, arrow, jsonlite, here, quiet = TRUE)\nfor (f in list.files(here(\"R\"), pattern = \"\\\\.R$\", full.names = TRUE)) source(f)\nPROJECT_ID &lt;- 2L\nDIR_EXPORT &lt;- here(\"data/export\", paste0(\"project-\", PROJECT_ID))\ndir.create(DIR_EXPORT, recursive = TRUE, showWarnings = FALSE)"
+  },
+  {
+    "objectID": "01_export_ecotaxa.html#the-node-as-anyone-can-see-it",
+    "href": "01_export_ecotaxa.html#the-node-as-anyone-can-see-it",
+    "title": "01 Export a project from EcoTaxa",
+    "section": "The node, as anyone can see it",
+    "text": "The node, as anyone can see it\nThe project list, the instruments and the per-project taxonomy statistics are readable without a login on this node; object data are not.\n\n\nCode\nprojects &lt;- ecotaxa_projects()\nprojects |&gt; select(projid, title, instrument, instrument_url, objcount, pctvalidated, pctclassified)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nprojid\ntitle\ninstrument\ninstrument_url\nobjcount\npctvalidated\npctclassified\n\n\n\n\n2\nUS EcoTaxa demo\nZooscan\nhttp://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/\n8\n0\n100\n\n\n\n\n\n\nCode\nstats &lt;- ecotaxa_project_taxo_stats(PROJECT_ID)\nstr(stats)\n\n\nList of 5\n $ used_taxa      : int [1:6] 45072 78418 84963 85011 85012 85078\n $ nb_validated   : int 0\n $ nb_predicted   : int 8\n $ nb_dubious     : int 0\n $ nb_unclassified: int 0"
+  },
+  {
+    "objectID": "01_export_ecotaxa.html#export",
+    "href": "01_export_ecotaxa.html#export",
+    "title": "01 Export a project from EcoTaxa",
+    "section": "Export",
+    "text": "Export\n\n\nCode\nif (ecotaxa_has_login()) {\n  token &lt;- ecotaxa_login()\n  tsv_paths &lt;- ecotaxa_export(PROJECT_ID, DIR_EXPORT, token = token, with_images = \"first\")\n  source_of_objects &lt;- \"EcoTaxa API general export\"\n} else {\n  tsv_paths &lt;- list.files(here(\"data-raw/import_test\"), pattern = \"\\\\.tsv$\", recursive = TRUE, full.names = TRUE)\n  source_of_objects &lt;- \"data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)\"\n}\ncat(\"objects come from:\", source_of_objects, \"\\n\")\n\n\nobjects come from: data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session) \n\n\nCode\nbasename(tsv_paths)\n\n\n[1] \"ecotaxa_m106_mn01_n1_sml.tsv\" \"ecotaxa_m106_mn01_n2_sml.tsv\"\n\n\n\n\nCode\nobjects &lt;- read_ecotaxa_export(tsv_paths)\ncat(nrow(objects), \"objects,\", n_distinct(objects$sample_id), \"samples,\",\n    n_distinct(objects$acq_id), \"acquisitions,\", ncol(objects), \"columns\\n\")\n\n\n8 objects, 2 samples, 2 acquisitions, 90 columns\n\n\nCode\nobjects |&gt;\n  count(sample_id, acq_id, object_annotation_status, object_annotation_category, object_annotation_category_id)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nsample_id\nacq_id\nobject_annotation_status\nobject_annotation_category\nobject_annotation_category_id\nn\n\n\n\n\nm106_mn01_n1_sml\ngeneric_m106_mn01_n1_sml\npredicted\nCyclopoida\n45072\n1\n\n\nm106_mn01_n1_sml\ngeneric_m106_mn01_n1_sml\npredicted\nOncaeidae\n78418\n2\n\n\nm106_mn01_n1_sml\ngeneric_m106_mn01_n1_sml\npredicted\nother&lt;living\n85011\n1\n\n\nm106_mn01_n1_sml\ngeneric_m106_mn01_n1_sml\npredicted\nt001\n85012\n1\n\n\nm106_mn01_n2_sml\ngeneric_m106_mn01_n2_sml\npredicted\ndetritus\n84963\n2\n\n\nm106_mn01_n2_sml\ngeneric_m106_mn01_n2_sml\npredicted\negg&lt;other\n85078\n1"
+  },
+  {
+    "objectID": "01_export_ecotaxa.html#cache",
+    "href": "01_export_ecotaxa.html#cache",
+    "title": "01 Export a project from EcoTaxa",
+    "section": "Cache",
+    "text": "Cache\n\n\nCode\nwrite_parquet(objects, file.path(DIR_EXPORT, \"objects.parquet\"))\nwriteLines(toJSON(list(project_id = PROJECT_ID, source = source_of_objects, tsv = basename(tsv_paths),\n                       n_objects = nrow(objects), exported_utc = format(Sys.time(), \"%Y-%m-%dT%H:%M:%SZ\", tz = \"UTC\"),\n                       image_dir = if (ecotaxa_has_login()) DIR_EXPORT else here(\"data-raw/import_test\")),\n                  auto_unbox = TRUE, pretty = TRUE), file.path(DIR_EXPORT, \"export.json\"))\nlist.files(DIR_EXPORT, recursive = TRUE)\n\n\n[1] \"export.json\"     \"objects.parquet\""
+  },
+  {
+    "objectID": "01_export_ecotaxa.html#notes",
+    "href": "01_export_ecotaxa.html#notes",
+    "title": "01 Export a project from EcoTaxa",
+    "section": "Notes",
+    "text": "Notes\n\nThe export carries object_annotation_category_id, the node’s internal taxonomy id, which notebook 02 resolves. It carries no AphiaID.\nA login token from POST /api/login is a JWT; the API also offers /token with a refresh token, which a scheduled pipeline should prefer.\nwith_images = \"first\" ships the visible image per object; \"all\" can produce several TSV lines per object."
+  },
+  {
+    "objectID": "03_publish_to-obis.html",
+    "href": "03_publish_to-obis.html",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "",
+    "text": "flowchart LR\n  subgraph et[\"EcoTaxa (REST API, token login)\"]\n    direction TB\n    P[\"project\\n(instrument, license, contacts)\"]\n    S[\"samples\\n(lat, lon, date, depth, volume)\"]\n    A[\"acquisitions\\n(instrument settings)\"]\n    O[\"objects\\n(category, status validated / predicted,\\nannotator, size features, image)\"]\n    P --&gt; S --&gt; A --&gt; O\n  end\n  O --&gt; X[\"01 export\\nTSV + images\\n(cached locally)\"]\n  X --&gt; W[\"02 taxa\\nEcoTaxa category to WoRMS\\nreviewable lookup table:\\nAphiaID, rank, or excluded\\n(detritus, egg, t001)\"]\n  W --&gt; E[\"03 Event core\\none row per sample (+ acquisition)\\neventID, eventDate, lat/lon, depth,\\nsamplingProtocol, sampleSizeValue\"]\n  W --&gt; OC[\"03 Occurrence\\nvalidated objects aggregated\\nper sample x taxon\\nscientificNameID = WoRMS LSID\\nidentificationVerificationStatus\"]\n  W --&gt; M[\"03 eMoF\\nabundance, concentration,\\nbiovolume, size\\nNERC P01 / P06 URIs\"]\n  W -.-&gt; AC[\"Audubon Core (optional)\\nimage URLs per object\"]\n  E & OC & M & AC --&gt; Z[\"EML + meta.xml\\nDwC-A zip + manifest\\nvalidate (obistools)\"]\n  Z --&gt; IPT[\"OBIS-USA IPT\\n(manual upload)\"] --&gt; OBIS[\"OBIS\"] --&gt; GBIF[\"GBIF\"]\n  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;\n  class IPT,OBIS,GBIF ext;"
+  },
+  {
+    "objectID": "03_publish_to-obis.html#what-this-does",
+    "href": "03_publish_to-obis.html#what-this-does",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "What this does",
+    "text": "What this does\nFrom the cached export (01) and the reviewed lookup (02): one Event per sample (a child event per acquisition when a sample has several), Occurrence rows for validated objects aggregated per event and taxon, an extended MeasurementOrFact with the instrument (NERC L22 URI from the node), the sample volume, the object count, the concentration where a volume exists and the mean equivalent spherical diameter as exported, then EML, meta.xml, a deterministic DwC-A zip with a manifest, and the checks.\nThe upload to the OBIS-USA IPT stays a deliberate manual act by the data owner. Nothing here talks to a portal.\n\n\nCode\nlibrarian::shelf(dplyr, readr, tibble, arrow, jsonlite, xml2, digest, obistools, here, quiet = TRUE)\nfor (f in list.files(here(\"R\"), pattern = \"\\\\.R$\", full.names = TRUE)) source(f)\nPROJECT_ID  &lt;- 2L\nDATASET_KEY &lt;- paste0(\"ecotaxa-om-prj\", PROJECT_ID)\nVERSION     &lt;- format(Sys.Date())\nDIR_EXPORT  &lt;- here(\"data/export\", paste0(\"project-\", PROJECT_ID))\nDIR_DWCA    &lt;- here(\"data/darwincore\", DATASET_KEY)\nobjects &lt;- read_parquet(file.path(DIR_EXPORT, \"objects.parquet\"))\nlookup  &lt;- read_taxa_lookup(here(\"metadata/taxa_lookup.csv\"))\nreg     &lt;- read_measurement_registry(here(\"metadata/measurement_type.csv\"))\nproject &lt;- ecotaxa_projects() |&gt; filter(projid == PROJECT_ID)\nproject |&gt; select(projid, title, instrument, instrument_url)\n\n\n\n\n\n\n\n\n\n\n\n\nprojid\ntitle\ninstrument\ninstrument_url\n\n\n\n\n2\nUS EcoTaxa demo\nZooscan\nhttp://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/"
+  },
+  {
+    "objectID": "03_publish_to-obis.html#the-gate-on-taxa-and-the-honest-switch",
+    "href": "03_publish_to-obis.html#the-gate-on-taxa-and-the-honest-switch",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "The gate on taxa, and the honest switch",
+    "text": "The gate on taxa, and the honest switch\n\n\nCode\nassert_taxa_resolved(objects, lookup)\nobjects |&gt; count(object_annotation_status)\n\n\n\n\n\n\nobject_annotation_status\nn\n\n\n\n\npredicted\n8\n\n\n\n\n\n\nCode\n# the demo project has no validated object: everything is the classifier's prediction. a real publication\n# keeps the default (validated only); the demo opts in so the archive is not empty, and every occurrence\n# says identificationVerificationStatus = predicted\nINCLUDE_PREDICTED &lt;- !any(tolower(objects$object_annotation_status) == \"validated\")\nINCLUDE_PREDICTED\n\n\n[1] TRUE"
+  },
+  {
+    "objectID": "03_publish_to-obis.html#event-occurrence-emof",
+    "href": "03_publish_to-obis.html#event-occurrence-emof",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "Event, Occurrence, eMoF",
+    "text": "Event, Occurrence, eMoF\n\n\nCode\nevent      &lt;- dwc_event(objects, DATASET_KEY)\noccurrence &lt;- dwc_occurrence(objects, event, lookup, DATASET_KEY, include_predicted = INCLUDE_PREDICTED)\nemof       &lt;- dwc_emof(objects, event, occurrence, reg, DATASET_KEY, instrument_url = project$instrument_url)\nevent\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\neventID\nparentEventID\neventType\neventDate\ndecimalLatitude\ndecimalLongitude\ngeodeticDatum\nminimumDepthInMeters\nmaximumDepthInMeters\nsamplingProtocol\ndatasetID\n\n\n\n\necotaxa-om-prj2:m106_mn01_n1_sml\nNA\nsample\n2014-04-20\n18\n-24.41667\nEPSG:4326\n600\n1000\nepson; net\necotaxa-om-prj2\n\n\necotaxa-om-prj2:m106_mn01_n2_sml\nNA\nsample\n2014-04-20\n18\n-24.41667\nEPSG:4326\n300\n600\nepson; net\necotaxa-om-prj2\n\n\n\n\n\n\nCode\noccurrence |&gt; select(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,\n                     identificationVerificationStatus, identificationRemarks)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\noccurrenceID\neventID\nscientificName\nscientificNameID\ntaxonRank\norganismQuantity\nidentificationVerificationStatus\nidentificationRemarks\n\n\n\n\necotaxa-om-prj2:m106_mn01_n1_sml:1101:predicted\necotaxa-om-prj2:m106_mn01_n1_sml\nCyclopoida\nurn:lsid:marinespecies.org:taxname:1101\nOrder\n1\npredicted\nEcoTaxa category: Cyclopoida (45072)\n\n\necotaxa-om-prj2:m106_mn01_n1_sml:128586:predicted\necotaxa-om-prj2:m106_mn01_n1_sml\nOncaeidae\nurn:lsid:marinespecies.org:taxname:128586\nFamily\n2\npredicted\nEcoTaxa category: Oncaeidae (78418)\n\n\n\n\n\n\nCode\nemof |&gt; select(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\neventID\noccurrenceID\nmeasurementType\nmeasurementValue\nmeasurementUnit\nmeasurementTypeID\nmeasurementUnitID\nmeasurementValueID\n\n\n\n\necotaxa-om-prj2:m106_mn01_n1_sml\nNA\nsampling instrument\nepson\nNA\nNA\nNA\nhttp://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/\n\n\necotaxa-om-prj2:m106_mn01_n2_sml\nNA\nsampling instrument\nepson\nNA\nNA\nNA\nhttp://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/\n\n\necotaxa-om-prj2:m106_mn01_n1_sml\necotaxa-om-prj2:m106_mn01_n1_sml:1101:predicted\nobject count\n1\nindividuals\nNA\nhttp://vocab.nerc.ac.uk/collection/P06/current/UUUU/\nNA\n\n\necotaxa-om-prj2:m106_mn01_n1_sml\necotaxa-om-prj2:m106_mn01_n1_sml:128586:predicted\nobject count\n2\nindividuals\nNA\nhttp://vocab.nerc.ac.uk/collection/P06/current/UUUU/\nNA"
+  },
+  {
+    "objectID": "03_publish_to-obis.html#checks",
+    "href": "03_publish_to-obis.html#checks",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "Checks",
+    "text": "Checks\n\n\nCode\nfindings &lt;- dwc_check(event, occurrence, emof)\nfindings\n\n\n\n\n\n\n\n\n\n\n\n\nfinding\nlevel\nn\ndetail\n\n\n\n\npredicted_included\nwarn\n2\nclassifier predictions published, not validated\n\n\nno_measurement_type_id\nwarn\n4\n\n\n\n\n\n\n\nCode\nassert_dwc(findings)\n# obistools on the same tables: required fields and event ids\nobistools::check_fields(occurrence) |&gt; as_tibble()\n\n\n\n\n\n\n\n\n\n\n\n\nlevel\nfield\nrow\nmessage\n\n\n\n\nerror\neventDate\nNA\nRequired field eventDate is missing\n\n\nerror\ndecimalLongitude\nNA\nRequired field decimalLongitude is missing\n\n\nerror\ndecimalLatitude\nNA\nRequired field decimalLatitude is missing\n\n\n\n\n\n\nCode\nobistools::check_eventids(event)   |&gt; as_tibble()"
+  },
+  {
+    "objectID": "03_publish_to-obis.html#eml",
+    "href": "03_publish_to-obis.html#eml",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "EML",
+    "text": "EML\n\n\nCode\neml &lt;- build_eml(as.list(project), event, occurrence, meta = list(\n  abstract = paste(\"Demonstration export of EcoTaxa project\", PROJECT_ID, \"(\", project$title, \") on the\",\n                   \"Ocean Metrics demo node, resolved to WoRMS and aggregated per sample and taxon.\",\n                   \"Eight test objects from the upstream EcoTaxa test set; classifier predictions only.\"),\n  license = \"CC BY 4.0 (demo; the project's own license applies in production)\",\n  contact_name = \"Ben Best\", contact_email = \"ben@oceanmetrics.io\", organization = \"Ocean Metrics\",\n  instrument = project$instrument))\neml_check(eml)\n\n\n\n\n\n\nelement\npresent\nlevel\n\n\n\n\ndataset/title\nTRUE\nok\n\n\ndataset/creator\nTRUE\nok\n\n\ndataset/contact\nTRUE\nok\n\n\ndataset/abstract/para\nTRUE\nok\n\n\ndataset/intellectualRights\nTRUE\nok\n\n\ndataset/pubDate\nTRUE\nok\n\n\ndataset/coverage/geographicCoverage\nTRUE\nok\n\n\ndataset/coverage/temporalCoverage\nTRUE\nok\n\n\n\n\n\n\nCode\nstopifnot(!any(eml_check(eml)$level == \"error\"))\ndir.create(DIR_DWCA, recursive = TRUE, showWarnings = FALSE)\neml_path &lt;- write_eml(eml, file.path(DIR_DWCA, \"eml.xml\"))"
+  },
+  {
+    "objectID": "03_publish_to-obis.html#the-archive",
+    "href": "03_publish_to-obis.html#the-archive",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "The archive",
+    "text": "The archive\n\n\nCode\na &lt;- dwc_archive(file.path(DIR_DWCA, \"build\"), event, occurrence, emof, eml_path = eml_path,\n                 dataset_key = DATASET_KEY, version = VERSION)\nstr(a)\n\n\nList of 4\n $ zip         : chr \"/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/darwincore/ecotaxa-om-prj2/ecotaxa-om-prj2_2026-11-06.zip\"\n $ manifest    : chr \"/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/darwincore/ecotaxa-om-prj2/ecotaxa-om-prj2_2026-11-06_manifest.json\"\n $ content_hash: chr \"75ddff35a24e06464cea2b24acc79d7af1fa1f6fbf47bb3249e27bc3911f769b\"\n $ counts      :List of 3\n  ..$ event     : int 2\n  ..$ occurrence: int 2\n  ..$ emof      : int 4\n\n\nCode\nutils::unzip(a$zip, list = TRUE)\n\n\n\n\n\n\nName\nLength\nDate\n\n\n\n\nevent.csv\n441\n2026-11-06 01:00:00\n\n\noccurrence.csv\n997\n2026-11-06 01:00:00\n\n\nextendedMeasurementOrFact.csv\n1003\n2026-11-06 01:00:00\n\n\nmeta.xml\n3842\n2026-11-06 01:00:00\n\n\neml.xml\n3154\n2026-11-06 01:00:00\n\n\n\n\n\n\nCode\ncat(readLines(a$manifest), sep = \"\\n\")\n\n\n{\n  \"dataset_key\": \"ecotaxa-om-prj2\",\n  \"version\": \"2026-11-06\",\n  \"content_hash\": \"75ddff35a24e06464cea2b24acc79d7af1fa1f6fbf47bb3249e27bc3911f769b\",\n  \"archive\": \"ecotaxa-om-prj2_2026-11-06.zip\",\n  \"archive_sha256\": \"d4ba3b7571f58a5cbe49546803d6339063dd2aef62339fdad20b9f7099b8643a\",\n  \"counts\": {\n    \"event\": 2,\n    \"occurrence\": 2,\n    \"emof\": 4\n  },\n  \"generated_utc\": \"2026-11-06T12:47:41Z\"\n}"
+  },
+  {
+    "objectID": "03_publish_to-obis.html#next-by-a-person",
+    "href": "03_publish_to-obis.html#next-by-a-person",
+    "title": "03 Build and validate the Darwin Core Archive for OBIS",
+    "section": "Next, by a person",
+    "text": "Next, by a person\n\nReview metadata/taxa_lookup.csv and the predicted_included finding above.\nUpload ecotaxa-om-prj2_2026-11-06.zip to the OBIS-USA IPT as a new resource (or a new version of one) and record the IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF through OBIS-USA.\nCompare with EcoTaxa’s own collections/export/darwin_core output for the same project as a cross-check."
+  }
+]

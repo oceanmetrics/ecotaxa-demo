@@ -1,0 +1,1 @@
+Sitemap: https://oceanmetrics.github.io/ecotaxa-demo/sitemap.xml
