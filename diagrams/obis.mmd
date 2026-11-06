@@ -1,0 +1,19 @@
+flowchart LR
+  subgraph et["EcoTaxa (REST API, token login)"]
+    direction TB
+    P["project\n(instrument, license, contacts)"]
+    S["samples\n(lat, lon, date, depth, volume)"]
+    A["acquisitions\n(instrument settings)"]
+    O["objects\n(category, status validated / predicted,\nannotator, size features, image)"]
+    P --> S --> A --> O
+  end
+  O --> X["01 export\nTSV + images\n(cached locally)"]
+  X --> W["02 taxa\nEcoTaxa category to WoRMS\nreviewable lookup table:\nAphiaID, rank, or excluded\n(detritus, egg, t001)"]
+  W --> E["03 Event core\none row per sample (+ acquisition)\neventID, eventDate, lat/lon, depth,\nsamplingProtocol, sampleSizeValue"]
+  W --> OC["03 Occurrence\nvalidated objects aggregated\nper sample x taxon\nscientificNameID = WoRMS LSID\nidentificationVerificationStatus"]
+  W --> M["03 eMoF\nabundance, concentration,\nbiovolume, size\nNERC P01 / P06 URIs"]
+  W -.-> AC["Audubon Core (optional)\nimage URLs per object"]
+  E & OC & M & AC --> Z["EML + meta.xml\nDwC-A zip + manifest\nvalidate (obistools)"]
+  Z --> IPT["OBIS-USA IPT\n(manual upload)"] --> OBIS["OBIS"] --> GBIF["GBIF"]
+  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;
+  class IPT,OBIS,GBIF ext;

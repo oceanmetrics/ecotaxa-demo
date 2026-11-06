@@ -1,0 +1,7 @@
+ecotaxa_id,ecotaxa_name,type,lineage,decision,note,aphia_id,scientific_name,status,valid_aphia_id,valid_name,rank,kingdom,phylum,class,order,family,genus,lsid
+45072,Cyclopoida,P,Biota > Animalia > Arthropoda > Crustacea > Multicrustacea > Copepoda > Neocopepoda > Podoplea > Cyclopoida,aphia,aphia_id from the EcoTaxa taxonomy,1101,Cyclopoida,accepted,1101,Cyclopoida,Order,Animalia,Arthropoda,Copepoda,Cyclopoida,,,urn:lsid:marinespecies.org:taxname:1101
+78418,Oncaeidae,P,Biota > Animalia > Arthropoda > Crustacea > Multicrustacea > Copepoda > Neocopepoda > Podoplea > Cyclopoida > Ergasilida > Oncaeidae,aphia,aphia_id from the EcoTaxa taxonomy,128586,Oncaeidae,accepted,128586,Oncaeidae,Family,Animalia,Arthropoda,Copepoda,Cyclopoida,Oncaeidae,,urn:lsid:marinespecies.org:taxname:128586
+84963,detritus<not-living,M,not-living > detritus,excluded,non-living root: not-living,,,,,,,,,,,,,
+85011,other<Biota,M,Biota > other,excluded,morphological; nearest living ancestor is Biota (Superdomain),,,,,,,,,,,,,
+85012,t001,M,temporary > t001,excluded,non-living root: temporary,,,,,,,,,,,,,
+85078,egg<other,M,Biota > other > egg,excluded,morphological; nearest living ancestor is Biota (Superdomain),,,,,,,,,,,,,

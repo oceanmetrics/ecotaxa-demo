@@ -1,0 +1,6 @@
+measurement_type,unit,nerc_p01,nerc_p06,note
+sampling instrument,,,,"value is the EcoTaxa acq_instrument; measurementValueID carries the project's NERC L22 device URI when the node has one"
+sample volume,m3,,http://vocab.nerc.ac.uk/collection/P06/current/UCUB/,"from sample_tot_vol when the export carries it; no exact P01 concept chosen yet"
+object count,individuals,,http://vocab.nerc.ac.uk/collection/P06/current/UUUU/,"objects per event x taxon x status; no exact P01 concept chosen yet"
+concentration,individuals per m3,http://vocab.nerc.ac.uk/collection/P01/current/SDBIOL01/,http://vocab.nerc.ac.uk/collection/P06/current/UPMM/,"object count / sample volume"
+mean equivalent spherical diameter,pixel,,,"mean object_esd as exported (pixels); conversion to mm needs process_pixel and is not done here"

@@ -1,0 +1,108 @@
+---
+title: "03 Build and validate the Darwin Core Archive for OBIS"
+subtitle: "Event core, Occurrence, eMoF, EML, meta.xml, zip, checks. No upload."
+---
+
+```{mermaid}
+%%| file: diagrams/obis.mmd
+```
+
+## What this does
+
+From the cached export (01) and the reviewed lookup (02): one **Event** per sample (a child event per
+acquisition when a sample has several), **Occurrence** rows for validated objects aggregated per event and
+taxon, an **extended MeasurementOrFact** with the instrument (NERC L22 URI from the node), the sample volume,
+the object count, the concentration where a volume exists and the mean equivalent spherical diameter as
+exported, then **EML**, **meta.xml**, a deterministic **DwC-A zip** with a manifest, and the checks.
+
+The upload to the OBIS-USA IPT stays a deliberate manual act by the data owner. Nothing here talks to a portal.
+
+```{r}
+#| label: setup
+librarian::shelf(dplyr, readr, tibble, arrow, jsonlite, xml2, digest, obistools, here, quiet = TRUE)
+for (f in list.files(here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
+PROJECT_ID  <- 2L
+DATASET_KEY <- paste0("ecotaxa-om-prj", PROJECT_ID)
+VERSION     <- format(Sys.Date())
+DIR_EXPORT  <- here("data/export", paste0("project-", PROJECT_ID))
+DIR_DWCA    <- here("data/darwincore", DATASET_KEY)
+objects <- read_parquet(file.path(DIR_EXPORT, "objects.parquet"))
+lookup  <- read_taxa_lookup(here("metadata/taxa_lookup.csv"))
+reg     <- read_measurement_registry(here("metadata/measurement_type.csv"))
+project <- ecotaxa_projects() |> filter(projid == PROJECT_ID)
+project |> select(projid, title, instrument, instrument_url)
+```
+
+## The gate on taxa, and the honest switch
+
+```{r}
+#| label: gate
+assert_taxa_resolved(objects, lookup)
+objects |> count(object_annotation_status)
+# the demo project has no validated object: everything is the classifier's prediction. a real publication
+# keeps the default (validated only); the demo opts in so the archive is not empty, and every occurrence
+# says identificationVerificationStatus = predicted
+INCLUDE_PREDICTED <- !any(tolower(objects$object_annotation_status) == "validated")
+INCLUDE_PREDICTED
+```
+
+## Event, Occurrence, eMoF
+
+```{r}
+#| label: tables
+event      <- dwc_event(objects, DATASET_KEY)
+occurrence <- dwc_occurrence(objects, event, lookup, DATASET_KEY, include_predicted = INCLUDE_PREDICTED)
+emof       <- dwc_emof(objects, event, occurrence, reg, DATASET_KEY, instrument_url = project$instrument_url)
+event
+occurrence |> select(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,
+                     identificationVerificationStatus, identificationRemarks)
+emof |> select(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID)
+```
+
+## Checks
+
+```{r}
+#| label: checks
+findings <- dwc_check(event, occurrence, emof)
+findings
+assert_dwc(findings)
+# obistools on the same tables: required fields and event ids
+obistools::check_fields(occurrence) |> as_tibble()
+obistools::check_eventids(event)   |> as_tibble()
+```
+
+## EML
+
+```{r}
+#| label: eml
+eml <- build_eml(as.list(project), event, occurrence, meta = list(
+  abstract = paste("Demonstration export of EcoTaxa project", PROJECT_ID, "(", project$title, ") on the",
+                   "Ocean Metrics demo node, resolved to WoRMS and aggregated per sample and taxon.",
+                   "Eight test objects from the upstream EcoTaxa test set; classifier predictions only."),
+  license = "CC BY 4.0 (demo; the project's own license applies in production)",
+  contact_name = "Ben Best", contact_email = "ben@oceanmetrics.io", organization = "Ocean Metrics",
+  instrument = project$instrument))
+eml_check(eml)
+stopifnot(!any(eml_check(eml)$level == "error"))
+dir.create(DIR_DWCA, recursive = TRUE, showWarnings = FALSE)
+eml_path <- write_eml(eml, file.path(DIR_DWCA, "eml.xml"))
+```
+
+## The archive
+
+```{r}
+#| label: archive
+a <- dwc_archive(file.path(DIR_DWCA, "build"), event, occurrence, emof, eml_path = eml_path,
+                 dataset_key = DATASET_KEY, version = VERSION)
+str(a)
+utils::unzip(a$zip, list = TRUE)
+cat(readLines(a$manifest), sep = "\n")
+```
+
+## Next, by a person
+
+1. Review `metadata/taxa_lookup.csv` and the `predicted_included` finding above.
+2. Upload `r basename(a$zip)` to the OBIS-USA IPT as a new resource (or a new version of one) and record the
+   IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF
+   through OBIS-USA.
+3. Compare with EcoTaxa's own `collections/export/darwin_core` output for the same project as a cross-check.

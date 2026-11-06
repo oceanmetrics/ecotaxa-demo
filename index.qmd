@@ -1,0 +1,45 @@
+---
+title: "EcoTaxa to OBIS and NCEI: a working demo"
+subtitle: "One shared EcoTaxa → Darwin Core core, two destinations"
+---
+
+This site is the companion to the brief *US EcoTaxa: pipelines to OBIS and NCEI* (6 November 2026, a Word
+document kept with the proposal files). It runs, end to end, on the demo node
+at [ecotaxa.oceanmetrics.io](https://ecotaxa.oceanmetrics.io/prj/2): project 2, "US EcoTaxa demo",
+eight Zooscan objects in two samples. Nothing here submits anything to an IPT, to OBIS or to NCEI: the
+notebooks write files and say what the next, deliberate, human step would be.
+
+```{mermaid}
+%%| file: diagrams/end_to_end.mmd
+```
+
+## The notebooks
+
+| Notebook | What it does | Reusable logic |
+|---|---|---|
+| [01 Export](01_export_ecotaxa.qmd) | pulls the project through the REST API (token login, general export job, TSV + images), caches it under `data/` | `R/ecotaxa_api.R` |
+| [02 Taxa](02_taxa_worms.qmd) | resolves every EcoTaxa category to WoRMS into a reviewable lookup table, with explicit rules for non-living and morphological categories | `R/taxa.R` |
+| [03 OBIS](03_publish_to-obis.qmd) | builds Event, Occurrence and eMoF, the EML and `meta.xml`, zips a Darwin Core Archive, validates it (`obistools`) | `R/dwc.R`, `R/eml.R` |
+| [04 NCEI](04_archive_to-ncei.qmd) | assembles a BagIt-style archive package (images, TSV, DwC-A, metadata, SHA-256 manifest) and verifies it; describes the submission route as a proposal | `R/ncei.R` |
+
+Every rule in `R/` has a `testthat` test on a small synthetic fixture (`tests/testthat/`); run them with
+`Rscript tests/run_tests.R`. The notebooks call the functions, the tests assert them, so the two cannot drift.
+
+## Where it comes from
+
+The structure borrows from the CalCOFI Darwin Core pipeline
+([publish notebooks](https://calcofi.io/workflows/#publish), [calcofi4db](https://calcofi.io/calcofi4db/)):
+a term map that drives `meta.xml` so a column without a term is an error; vocabulary ids filled only on an
+exact match, never invented; deterministic archives with a content hash; and findings that gate the build
+instead of warnings that scroll by.
+
+## Honest limits of the demo
+
+- The demo project's eight objects are all **predicted** by the classifier, none validated. The OBIS notebook
+  therefore opts in to predicted objects (`include_predicted = TRUE`) and the archive carries
+  `identificationVerificationStatus = predicted` on every occurrence. A real publication would not.
+- Four of its six categories (`detritus`, `other`, `egg`, `t001`) are morphological and are excluded by rule;
+  two (`Cyclopoida`, `Oncaeidae`) carry an AphiaID in the node's taxonomy and publish.
+- The NERC P01 ids in `metadata/measurement_type.csv` are filled only where the concept is exact; most are empty
+  on purpose and show up as `no_measurement_type_id` warnings.
+- The NCEI package layout and route are a proposal to agree with NCEI, not an NCEI specification.

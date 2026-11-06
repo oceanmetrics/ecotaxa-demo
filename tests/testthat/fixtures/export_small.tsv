@@ -1,0 +1,4 @@
+object_id	object_lat	object_lon	object_date	object_time	object_annotation_status	object_annotation_category	object_annotation_category_id	sample_id	acq_id	acq_instrument
+[t]	[f]	[f]	[t]	[t]	[t]	[t]	[t]	[t]	[t]	[t]
+o1	43.6	7.3	20140701	100000	validated	Cyclopoida	45072	s1	a1	Zooscan
+o2	43.6	7.3	20140701	100000	predicted	detritus<not-living	84963	s1	a1	Zooscan

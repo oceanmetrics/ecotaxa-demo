@@ -1,0 +1,42 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+    - 01_export_ecotaxa.qmd
+    - 02_taxa_worms.qmd
+    - 03_publish_to-obis.qmd
+    - 04_archive_to-ncei.qmd
+
+website:
+  title: "EcoTaxa demo: pipelines to OBIS and NCEI"
+  description: "R Quarto notebooks that take an EcoTaxa project to a Darwin Core Archive for OBIS and an archive package for NCEI"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Overview
+      - href: 01_export_ecotaxa.qmd
+        text: "01 Export"
+      - href: 02_taxa_worms.qmd
+        text: "02 Taxa"
+      - href: 03_publish_to-obis.qmd
+        text: "03 OBIS"
+      - href: 04_archive_to-ncei.qmd
+        text: "04 NCEI"
+    right:
+      - href: https://ecotaxa.oceanmetrics.io/prj/2
+        text: Demo node
+      - href: https://github.com/oceanmetrics/ecotaxa-demo
+        icon: github
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-fold: show
+    code-tools: true
+    df-print: kable
+
+execute:
+  warning: false
+  message: false

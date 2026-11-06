@@ -1,0 +1,21 @@
+test_that("read_ecotaxa_tsv() drops the types row and types [f] columns", {
+  p <- fixture("export_small.tsv")
+  d <- read_ecotaxa_tsv(p)
+  expect_equal(nrow(d), 2L)
+  expect_type(d$object_lat, "double")
+  expect_type(d$object_id, "character")
+  expect_equal(d$object_annotation_category_id, c("45072", "84963"))
+  expect_equal(d$source_file, rep("export_small.tsv", 2))
+})
+test_that("read_ecotaxa_tsv() reads the upstream import set (no types row twist: it has one)", {
+  p <- file.path(root, "data-raw/import_test/m106_mn01_n1_sml/ecotaxa_m106_mn01_n1_sml.tsv")
+  skip_if_not(file.exists(p))
+  d <- read_ecotaxa_tsv(p)
+  expect_equal(nrow(d), 5L)
+  expect_true(all(c("object_annotation_category_id", "sample_id", "acq_instrument") %in% names(d)))
+})
+test_that("ecotaxa_datetime() builds ISO 8601 UTC and tolerates a missing time", {
+  expect_equal(ecotaxa_datetime("20140701", "103005"), "2014-07-01T10:30:05Z")
+  expect_equal(ecotaxa_datetime("20140701", NA), "2014-07-01")
+  expect_equal(ecotaxa_datetime(NA, "103005"), NA_character_)
+})

@@ -1,0 +1,88 @@
+---
+title: "01 Export a project from EcoTaxa"
+subtitle: "REST API, token login, general export job, cached locally"
+---
+
+```{mermaid}
+%%| file: diagrams/obis.mmd
+```
+
+## What this does
+
+EcoTaxa's REST API (`{ECOTAXA_URL}/api/docs`) exposes a **general export** job: it writes a zip with one TSV
+per sample (object, sample, acquisition and process fields, plus each object's category, annotation status,
+annotator and date) and, optionally, the images. This notebook logs in with a token, starts the job for
+project 2, waits for it, downloads and unzips it under `data/export/`, and reads the TSVs into one objects
+table cached as Parquet. Later notebooks read the cache and never touch the node.
+
+Credentials come from a git-ignored `.Renviron` (`ECOTAXA_URL`, `ECOTAXA_USER`, `ECOTAXA_PASSWORD`). When
+no login is configured, the notebook falls back to the upstream test set in `data-raw/import_test/`, which is
+the byte-identical source of project 2's eight objects (see `data-raw/README.md`), so the rest of the
+pipeline still runs on the same data; it says so below.
+
+```{r}
+#| label: setup
+librarian::shelf(httr2, dplyr, readr, tibble, arrow, jsonlite, here, quiet = TRUE)
+for (f in list.files(here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
+PROJECT_ID <- 2L
+DIR_EXPORT <- here("data/export", paste0("project-", PROJECT_ID))
+dir.create(DIR_EXPORT, recursive = TRUE, showWarnings = FALSE)
+```
+
+## The node, as anyone can see it
+
+The project list, the instruments and the per-project taxonomy statistics are readable without a login on
+this node; object data are not.
+
+```{r}
+#| label: public
+projects <- ecotaxa_projects()
+projects |> select(projid, title, instrument, instrument_url, objcount, pctvalidated, pctclassified)
+stats <- ecotaxa_project_taxo_stats(PROJECT_ID)
+str(stats)
+```
+
+## Export
+
+```{r}
+#| label: export
+if (ecotaxa_has_login()) {
+  token <- ecotaxa_login()
+  tsv_paths <- ecotaxa_export(PROJECT_ID, DIR_EXPORT, token = token, with_images = "first")
+  source_of_objects <- "EcoTaxa API general export"
+} else {
+  tsv_paths <- list.files(here("data-raw/import_test"), pattern = "\\.tsv$", recursive = TRUE, full.names = TRUE)
+  source_of_objects <- "data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"
+}
+cat("objects come from:", source_of_objects, "\n")
+basename(tsv_paths)
+```
+
+```{r}
+#| label: read
+objects <- read_ecotaxa_export(tsv_paths)
+cat(nrow(objects), "objects,", n_distinct(objects$sample_id), "samples,",
+    n_distinct(objects$acq_id), "acquisitions,", ncol(objects), "columns\n")
+objects |>
+  count(sample_id, acq_id, object_annotation_status, object_annotation_category, object_annotation_category_id)
+```
+
+## Cache
+
+```{r}
+#| label: cache
+write_parquet(objects, file.path(DIR_EXPORT, "objects.parquet"))
+writeLines(toJSON(list(project_id = PROJECT_ID, source = source_of_objects, tsv = basename(tsv_paths),
+                       n_objects = nrow(objects), exported_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+                       image_dir = if (ecotaxa_has_login()) DIR_EXPORT else here("data-raw/import_test")),
+                  auto_unbox = TRUE, pretty = TRUE), file.path(DIR_EXPORT, "export.json"))
+list.files(DIR_EXPORT, recursive = TRUE)
+```
+
+## Notes
+
+- The export carries `object_annotation_category_id`, the node's internal taxonomy id, which notebook 02 resolves.
+  It carries no AphiaID.
+- A login token from `POST /api/login` is a JWT; the API also offers `/token` with a refresh token, which a
+  scheduled pipeline should prefer.
+- `with_images = "first"` ships the visible image per object; `"all"` can produce several TSV lines per object.

@@ -1,0 +1,11 @@
+.Renviron
+.Rhistory
+.Rproj.user
+/data/
+/_site/
+/.quarto/
+/_freeze/
+node_modules/
+*_files/
+
+**/*.quarto_ipynb

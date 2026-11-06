@@ -1,0 +1,23 @@
+flowchart TB
+  subgraph inst["Imaging instruments"]
+    direction LR
+    I1["IFCB"] ~~~ I2["Zooscan / FlowCam"] ~~~ I3["UVP / PlanktoScope"] ~~~ I4["microscopy"]
+  end
+  subgraph node["US EcoTaxa node (national); the SECOORA Hub runs on it"]
+    direction LR
+    ET["EcoTaxa\nimport, classify, validate"] --> API["REST API\nTSV export + images"] --> OBJ[("Object storage\nimages on egress-free storage (R2)\npublic copy via NODD")]
+  end
+  subgraph core["Shared EcoTaxa to Darwin Core core (one codebase, both nodes)"]
+    direction LR
+    TX["Taxon match\nEcoTaxa category to WoRMS AphiaID"] --> DWC["Darwin Core\nEvent + Occurrence + eMoF\n(+ Audubon Core)"] --> EML["EML + meta.xml\nDwC-A zip"]
+  end
+  subgraph out["Destinations"]
+    direction LR
+    IPT["OBIS-USA IPT"] --> OBIS["OBIS"] --> GBIF["GBIF"]
+    PKG["Archive package\nimages + metadata + DwC-A\nmanifest + checksums"] --> NCEI["NCEI archive\n(route to agree with NCEI)"]
+  end
+  inst --> node --> core --> out
+  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;
+  classDef core fill:#e8f5e9,stroke:#2e7d32,color:#1b3a1c;
+  class IPT,OBIS,GBIF,NCEI ext;
+  class TX,DWC,EML core;
