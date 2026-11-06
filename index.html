@@ -294,7 +294,7 @@ flowchart TB
 <h2 class="anchored" data-anchor-id="honest-limits-of-the-demo">Honest limits of the demo</h2>
 <ul>
 <li>The demo project’s eight objects are all <strong>predicted</strong> by the classifier, none validated. The OBIS notebook therefore opts in to predicted objects (<code>include_predicted = TRUE</code>) and the archive carries <code>identificationVerificationStatus = predicted</code> on every occurrence. A real publication would not.</li>
-<li>Four of its six categories (<code>detritus</code>, <code>other</code>, <code>egg</code>, <code>t001</code>) are morphological and are excluded by rule; two (<code>Cyclopoida</code>, <code>Oncaeidae</code>) carry an AphiaID in the node’s taxonomy and publish.</li>
+<li>EcoTaxa’s taxonomy is WoRMS since its 2026 major version, so the two phylogenetic categories (<code>Cyclopoida</code>, <code>Oncaeidae</code>) carry an AphiaID and publish. The four morphological ones (<code>detritus</code>, <code>other</code>, <code>egg</code>, <code>t001</code>) are excluded by rule; EcoTaxa’s own mapping would publish <code>egg</code> and <code>other</code> as Biota and drop the other two (notebook 02 shows the cross-check).</li>
 <li>The NERC P01 ids in <code>metadata/measurement_type.csv</code> are filled only where the concept is exact; most are empty on purpose and show up as <code>no_measurement_type_id</code> warnings.</li>
 <li>The NCEI package layout and route are a proposal to agree with NCEI, not an NCEI specification.</li>
 </ul>
@@ -796,11 +796,13 @@ flowchart TB
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The demo project's eight objects are all **predicted** by the classifier, none validated. The OBIS notebook</span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  therefore opts in to predicted objects (<span class="in">`include_predicted = TRUE`</span>) and the archive carries</span>
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>  <span class="in">`identificationVerificationStatus = predicted`</span> on every occurrence. A real publication would not.</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Four of its six categories (<span class="in">`detritus`</span>, <span class="in">`other`</span>, <span class="in">`egg`</span>, <span class="in">`t001`</span>) are morphological and are excluded by rule;</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  two (<span class="in">`Cyclopoida`</span>, <span class="in">`Oncaeidae`</span>) carry an AphiaID in the node's taxonomy and publish.</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The NERC P01 ids in <span class="in">`metadata/measurement_type.csv`</span> are filled only where the concept is exact; most are empty</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  on purpose and show up as <span class="in">`no_measurement_type_id`</span> warnings.</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The NCEI package layout and route are a proposal to agree with NCEI, not an NCEI specification.</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>EcoTaxa's taxonomy is WoRMS since its 2026 major version, so the two phylogenetic categories</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`Cyclopoida`</span>, <span class="in">`Oncaeidae`</span>) carry an AphiaID and publish. The four morphological ones (<span class="in">`detritus`</span>,</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  <span class="in">`other`</span>, <span class="in">`egg`</span>, <span class="in">`t001`</span>) are excluded by rule; EcoTaxa's own mapping would publish <span class="in">`egg`</span> and <span class="in">`other`</span> as</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  Biota and drop the other two (notebook 02 shows the cross-check).</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The NERC P01 ids in <span class="in">`metadata/measurement_type.csv`</span> are filled only where the concept is exact; most are empty</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  on purpose and show up as <span class="in">`no_measurement_type_id`</span> warnings.</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The NCEI package layout and route are a proposal to agree with NCEI, not an NCEI specification.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
