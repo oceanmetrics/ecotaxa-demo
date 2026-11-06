@@ -4,12 +4,16 @@ subtitle: "A reviewable lookup table, with explicit rules for what is not a taxo
 ---
 
 ```{mermaid}
+%%{init: {"flowchart": {"wrappingWidth": 220, "nodeSpacing": 30, "rankSpacing": 60}}}%%
 flowchart LR
-  C["categories used by the project\n(taxo_stats.used_taxa)"] --> T["node taxonomy\n/api/taxon_set/query\ntype P or M, aphia_id, lineage"]
-  T --> D["taxa_decide()\naphia | name_match | ancestor | excluded"]
-  D --> W["taxa_worms_fill()\nworrms by AphiaID or exact name\nvalid name, rank, lineage, LSID"]
-  W --> L[("metadata/taxa_lookup.csv\nreviewed by a taxonomist")]
-  L --> O["03 OBIS: assert_taxa_resolved()"]
+  C["categories used by the project<br/>(taxo_stats.used_taxa)"]:::node --> T["node taxonomy<br/>/api/taxon_set/query<br/>type P or M, aphia_id, lineage"]:::node
+  T --> D["taxa_decide()<br/>aphia | name_match | ancestor | excluded"]:::core
+  D --> W["taxa_worms_fill()<br/>worrms by AphiaID or exact name<br/>valid name, rank, lineage, LSID"]:::core
+  W --> L[("metadata/taxa_lookup.csv<br/>reviewed by a taxonomist")]:::store
+  L --> O["03 OBIS: assert_taxa_resolved()"]:::core
+  classDef node  fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
+  classDef core  fill:#e6f1ea,stroke:#4f8a66,color:#173322
+  classDef store fill:#f3f0ea,stroke:#a08c6a,color:#3a2e1c
 ```
 
 ## Rules

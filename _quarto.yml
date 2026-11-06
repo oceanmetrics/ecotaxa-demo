@@ -1,6 +1,9 @@
 project:
   type: website
   output-dir: _site
+  resources:
+    - libs/svg-pan-zoom.min.js
+    - libs/diagram.js
   render:
     - index.qmd
     - 01_export_ecotaxa.qmd
@@ -36,6 +39,17 @@ format:
     code-fold: show
     code-tools: true
     df-print: kable
+    # diagrams: mermaid's own default theme (not the colours quarto derives from the
+    # bootstrap theme, which filled every subgraph dark grey), the look of the CalCOFI.io
+    # docs book (Source Sans 3, SVG labels, curved edges) and a pan-zoom viewer with a
+    # full-screen button, both from calcofi4r 1.31.0's cc_diagram_viewer() (libs/)
+    mermaid:
+      theme: default
+    css: libs/diagram.css
+    include-after-body:
+      text: |
+        <script src="libs/svg-pan-zoom.min.js"></script>
+        <script src="libs/diagram.js"></script>
 
 execute:
   warning: false

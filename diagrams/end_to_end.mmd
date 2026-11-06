@@ -1,23 +1,29 @@
+%%{init: {"flowchart": {"wrappingWidth": 260, "nodeSpacing": 40, "rankSpacing": 50}}}%%
 flowchart TB
   subgraph inst["Imaging instruments"]
     direction LR
-    I1["IFCB"] ~~~ I2["Zooscan / FlowCam"] ~~~ I3["UVP / PlanktoScope"] ~~~ I4["microscopy"]
+    I1["IFCB"]:::node ~~~ I2["Zooscan / FlowCam"]:::node ~~~ I3["UVP / PlanktoScope"]:::node ~~~ I4["microscopy"]:::node
   end
-  subgraph node["US EcoTaxa node (national); the SECOORA Hub runs on it"]
+  subgraph node["US EcoTaxa node (the SECOORA Hub runs on it)"]
     direction LR
-    ET["EcoTaxa\nimport, classify, validate"] --> API["REST API\nTSV export + images"] --> OBJ[("Object storage\nimages on egress-free storage (R2)\npublic copy via NODD")]
+    ET["EcoTaxa<br/>import, classify, validate"]:::node --> API["REST API<br/>TSV export + images"]:::node --> OBJ[("Object storage<br/>images on egress-free storage (R2)<br/>public copy via NODD")]:::store
   end
-  subgraph core["Shared EcoTaxa to Darwin Core core (one codebase, both nodes)"]
+  subgraph core["Shared EcoTaxa → Darwin Core core (one codebase)"]
     direction LR
-    TX["Taxon match\nEcoTaxa category to WoRMS AphiaID"] --> DWC["Darwin Core\nEvent + Occurrence + eMoF\n(+ Audubon Core)"] --> EML["EML + meta.xml\nDwC-A zip"]
+    TX["Taxon match<br/>EcoTaxa category to WoRMS AphiaID"]:::core --> DWC["Darwin Core<br/>Event + Occurrence + eMoF<br/>(+ Audubon Core)"]:::core --> EML["EML + meta.xml<br/>DwC-A zip"]:::core
   end
   subgraph out["Destinations"]
     direction LR
-    IPT["OBIS-USA IPT"] --> OBIS["OBIS"] --> GBIF["GBIF"]
-    PKG["Archive package\nimages + metadata + DwC-A\nmanifest + checksums"] --> NCEI["NCEI archive\n(route to agree with NCEI)"]
+    IPT["OBIS-USA IPT"]:::ext --> OBIS["OBIS"]:::ext --> GBIF["GBIF"]:::ext
+    PKG["Archive package<br/>images + metadata + DwC-A<br/>manifest + checksums"]:::node --> NCEI["NCEI archive<br/>(route to agree with NCEI)"]:::propose
   end
   inst --> node --> core --> out
-  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;
-  classDef core fill:#e8f5e9,stroke:#2e7d32,color:#1b3a1c;
-  class IPT,OBIS,GBIF,NCEI ext;
-  class TX,DWC,EML core;
+  classDef node     fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
+  classDef core     fill:#e6f1ea,stroke:#4f8a66,color:#173322
+  classDef ext      fill:#e8eff7,stroke:#5b7a99,color:#1a2b3c
+  classDef store    fill:#f3f0ea,stroke:#a08c6a,color:#3a2e1c
+  classDef propose  fill:#fff6dc,stroke:#c9a227,color:#3a2e00
+  style inst fill:#f7f9fb,stroke:#cfd6de,color:#4a5a6a
+  style node fill:#f7f9fb,stroke:#cfd6de,color:#4a5a6a
+  style core fill:#f4faf6,stroke:#b9d6c3,color:#2f5a3f
+  style out  fill:#f7f9fb,stroke:#cfd6de,color:#4a5a6a

@@ -1,18 +1,21 @@
+%%{init: {"flowchart": {"wrappingWidth": 220, "nodeSpacing": 30, "rankSpacing": 60}}}%%
 flowchart LR
   subgraph src["Inputs (per EcoTaxa project, dated version)"]
     direction TB
-    IMG["images\n(vault, one file per object)"]
-    TSV["EcoTaxa TSV export\n(objects, samples, acquisitions, process)"]
-    DWCA["DwC-A zip\n(from the OBIS pipeline)"]
-    MD["project metadata\n(EML, contacts, license, instrument)"]
+    IMG["images<br/>(vault, one file per object)"]:::node
+    TSV["EcoTaxa TSV export<br/>(objects, samples, acquisitions, process)"]:::node
+    DWCA["DwC-A zip<br/>(from the OBIS pipeline)"]:::core
+    MD["project metadata<br/>(EML, contacts, license, instrument)"]:::node
   end
-  IMG & TSV & DWCA & MD --> B["04 build package\nBagIt-style layout\nmanifest + SHA-256 checksums\nISO 19115-2 / ACDD metadata record\nversion YYYY-MM-DD"]
-  B --> V["verify\nre-hash, count, schema checks"]
-  V --> ST[("staging copy\nobject storage (R2 / NODD)")]
-  ST --> SUB["NCEI submission\n(S2N / ATRAC: route to agree\nwith NCEI and Matt Biddle)"]
-  SUB --> ACC["NCEI accession\nDOI, landing page"]
+  IMG & TSV & DWCA & MD --> B["04 build package<br/>BagIt-style layout<br/>manifest + SHA-256 checksums<br/>ISO 19115-2 / ACDD metadata record<br/>version YYYY-MM-DD"]:::core
+  B --> V["verify<br/>re-hash, count, schema checks"]:::core
+  V --> ST[("staging copy<br/>object storage (R2 / NODD)")]:::store
+  ST --> SUB["NCEI submission<br/>(S2N / ATRAC: route to agree<br/>with NCEI and Matt Biddle)"]:::propose
+  SUB --> ACC["NCEI accession<br/>DOI, landing page"]:::ext
   ACC -.->|"DOI back into"| DWCA
-  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;
-  classDef prop fill:#fff8e1,stroke:#b8860b,color:#3a2e00;
-  class ACC ext;
-  class SUB prop;
+  classDef node     fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
+  classDef core     fill:#e6f1ea,stroke:#4f8a66,color:#173322
+  classDef ext      fill:#e8eff7,stroke:#5b7a99,color:#1a2b3c
+  classDef store    fill:#f3f0ea,stroke:#a08c6a,color:#3a2e1c
+  classDef propose  fill:#fff6dc,stroke:#c9a227,color:#3a2e00
+  style src fill:#f7f9fb,stroke:#cfd6de,color:#4a5a6a

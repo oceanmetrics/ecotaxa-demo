@@ -1,19 +1,22 @@
+%%{init: {"flowchart": {"wrappingWidth": 220, "nodeSpacing": 30, "rankSpacing": 60}}}%%
 flowchart LR
   subgraph et["EcoTaxa (REST API, token login)"]
     direction TB
-    P["project\n(instrument, license, contacts)"]
-    S["samples\n(lat, lon, date, depth, volume)"]
-    A["acquisitions\n(instrument settings)"]
-    O["objects\n(category, status validated / predicted,\nannotator, size features, image)"]
+    P["project<br/>(instrument, license, contacts)"]:::node
+    S["samples<br/>(lat, lon, date, depth, volume)"]:::node
+    A["acquisitions<br/>(instrument settings)"]:::node
+    O["objects<br/>(category, status validated / predicted,<br/>annotator, size features, image)"]:::node
     P --> S --> A --> O
   end
-  O --> X["01 export\nTSV + images\n(cached locally)"]
-  X --> W["02 taxa\nEcoTaxa category to WoRMS\nreviewable lookup table:\nAphiaID, rank, or excluded\n(detritus, egg, t001)"]
-  W --> E["03 Event core\none row per sample (+ acquisition)\neventID, eventDate, lat/lon, depth,\nsamplingProtocol, sampleSizeValue"]
-  W --> OC["03 Occurrence\nvalidated objects aggregated\nper sample x taxon\nscientificNameID = WoRMS LSID\nidentificationVerificationStatus"]
-  W --> M["03 eMoF\nabundance, concentration,\nbiovolume, size\nNERC P01 / P06 URIs"]
-  W -.-> AC["Audubon Core (optional)\nimage URLs per object"]
-  E & OC & M & AC --> Z["EML + meta.xml\nDwC-A zip + manifest\nvalidate (obistools)"]
-  Z --> IPT["OBIS-USA IPT\n(manual upload)"] --> OBIS["OBIS"] --> GBIF["GBIF"]
-  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;
-  class IPT,OBIS,GBIF ext;
+  O --> X["01 export<br/>TSV + images<br/>(cached locally)"]:::node
+  X --> W["02 taxa<br/>EcoTaxa category to WoRMS<br/>reviewable lookup table:<br/>AphiaID, rank, or excluded<br/>(detritus, egg, t001)"]:::core
+  W --> E["03 Event core<br/>one row per sample (+ acquisition)<br/>eventID, eventDate, lat/lon, depth,<br/>samplingProtocol, sampleSizeValue"]:::core
+  W --> OC["03 Occurrence<br/>validated objects aggregated<br/>per sample x taxon<br/>scientificNameID = WoRMS LSID<br/>identificationVerificationStatus"]:::core
+  W --> M["03 eMoF<br/>abundance, concentration,<br/>biovolume, size<br/>NERC P01 / P06 URIs"]:::core
+  W -.-> AC["Audubon Core (optional)<br/>image URLs per object"]:::core
+  E & OC & M & AC --> Z["EML + meta.xml<br/>DwC-A zip + manifest<br/>validate (obistools)"]:::core
+  Z --> IPT["OBIS-USA IPT<br/>(manual upload)"]:::ext --> OBIS["OBIS"]:::ext --> GBIF["GBIF"]:::ext
+  classDef node     fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
+  classDef core     fill:#e6f1ea,stroke:#4f8a66,color:#173322
+  classDef ext      fill:#e8eff7,stroke:#5b7a99,color:#1a2b3c
+  style et fill:#f7f9fb,stroke:#cfd6de,color:#4a5a6a
