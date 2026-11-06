@@ -108,11 +108,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="mermaid-theme" content="default">
 <script src="site_libs/quarto-diagram/mermaid.min.js"></script>
 <script src="site_libs/quarto-diagram/mermaid-init.js"></script>
 <link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
+<link rel="stylesheet" href="libs/diagram.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -215,24 +217,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div>
 <p></p><figure class="figure"><p></p>
 <div>
-<pre class="mermaid mermaid-js">flowchart LR
+<pre class="mermaid mermaid-js">%%{init: {"flowchart": {"wrappingWidth": 220, "nodeSpacing": 30, "rankSpacing": 60}}}%%
+flowchart LR
   subgraph src["Inputs (per EcoTaxa project, dated version)"]
     direction TB
-    IMG["images\n(vault, one file per object)"]
-    TSV["EcoTaxa TSV export\n(objects, samples, acquisitions, process)"]
-    DWCA["DwC-A zip\n(from the OBIS pipeline)"]
-    MD["project metadata\n(EML, contacts, license, instrument)"]
+    IMG["images&lt;br/&gt;(vault, one file per object)"]:::node
+    TSV["EcoTaxa TSV export&lt;br/&gt;(objects, samples, acquisitions, process)"]:::node
+    DWCA["DwC-A zip&lt;br/&gt;(from the OBIS pipeline)"]:::core
+    MD["project metadata&lt;br/&gt;(EML, contacts, license, instrument)"]:::node
   end
-  IMG &amp; TSV &amp; DWCA &amp; MD --&gt; B["04 build package\nBagIt-style layout\nmanifest + SHA-256 checksums\nISO 19115-2 / ACDD metadata record\nversion YYYY-MM-DD"]
-  B --&gt; V["verify\nre-hash, count, schema checks"]
-  V --&gt; ST[("staging copy\nobject storage (R2 / NODD)")]
-  ST --&gt; SUB["NCEI submission\n(S2N / ATRAC: route to agree\nwith NCEI and Matt Biddle)"]
-  SUB --&gt; ACC["NCEI accession\nDOI, landing page"]
+  IMG &amp; TSV &amp; DWCA &amp; MD --&gt; B["04 build package&lt;br/&gt;BagIt-style layout&lt;br/&gt;manifest + SHA-256 checksums&lt;br/&gt;ISO 19115-2 / ACDD metadata record&lt;br/&gt;version YYYY-MM-DD"]:::core
+  B --&gt; V["verify&lt;br/&gt;re-hash, count, schema checks"]:::core
+  V --&gt; ST[("staging copy&lt;br/&gt;object storage (R2 / NODD)")]:::store
+  ST --&gt; SUB["NCEI submission&lt;br/&gt;(S2N / ATRAC: route to agree&lt;br/&gt;with NCEI and Matt Biddle)"]:::propose
+  SUB --&gt; ACC["NCEI accession&lt;br/&gt;DOI, landing page"]:::ext
   ACC -.-&gt;|"DOI back into"| DWCA
-  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;
-  classDef prop fill:#fff8e1,stroke:#b8860b,color:#3a2e00;
-  class ACC ext;
-  class SUB prop;
+  classDef node     fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
+  classDef core     fill:#e6f1ea,stroke:#4f8a66,color:#173322
+  classDef ext      fill:#e8eff7,stroke:#5b7a99,color:#1a2b3c
+  classDef store    fill:#f3f0ea,stroke:#a08c6a,color:#3a2e1c
+  classDef propose  fill:#fff6dc,stroke:#c9a227,color:#3a2e00
+  style src fill:#f7f9fb,stroke:#cfd6de,color:#4a5a6a
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -262,7 +267,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  $ source      : chr "data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"
  $ tsv         : chr [1:2] "ecotaxa_m106_mn01_n1_sml.tsv" "ecotaxa_m106_mn01_n2_sml.tsv"
  $ n_objects   : int 8
- $ exported_utc: chr "2026-11-06T12:47:17Z"
+ $ exported_utc: chr "2026-11-06T12:55:25Z"
  $ image_dir   : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data-raw/import_test"</code></pre>
 </div>
 </div>
@@ -363,7 +368,7 @@ c306d6cf252c643d30768bf289bf482c44a6c4ecf8660a89463e91a4e2023466 data/images/m10
 49c177d9947596053b66dad8537920926c7232ce5ed8416c8f842c1aeb9ae102 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1.jpg
 230b403667dbb197969c20e3eb0ded7a58f42a9322486e1fa421695ff5f69fcd data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1081.jpg
 7d297b65336d3750341dbec2ce75e77fe6dc2f6bc722fb62585d282a89152d75 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1111.jpg
-d7babaa9c8f2b802bd23e8341a8de31be291aceb676f57d7eb0fd47d6a68372a data/metadata/dataset.json
+05ce25fd165c2956596acac26f1eea03bc5027ad433131c8ec862ba46ebea9d3 data/metadata/dataset.json
 1ad935417deaeb4f6806e0c5b35b56e86b5d9952704bf2b7685f3268cc2ca7ad data/metadata/eml.xml</code></pre>
 </div>
 </div>
@@ -538,7 +543,7 @@ d7babaa9c8f2b802bd23e8341a8de31be291aceb676f57d7eb0fd47d6a68372a data/metadata/d
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/oceanmetrics\.github\.io\/ecotaxa-demo\/");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
@@ -956,6 +961,8 @@ d7babaa9c8f2b802bd23e8341a8de31be291aceb676f57d7eb0fd47d6a68372a data/metadata/d
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
+<script src="libs/svg-pan-zoom.min.js"></script>
+<script src="libs/diagram.js"></script>
 
 
 

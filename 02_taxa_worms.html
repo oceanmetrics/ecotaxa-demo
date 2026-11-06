@@ -108,11 +108,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="mermaid-theme" content="default">
 <script src="site_libs/quarto-diagram/mermaid.min.js"></script>
 <script src="site_libs/quarto-diagram/mermaid-init.js"></script>
 <link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
+<link rel="stylesheet" href="libs/diagram.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -213,12 +215,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div>
 <p></p><figure class="figure"><p></p>
 <div>
-<pre class="mermaid mermaid-js">flowchart LR
-  C["categories used by the project\n(taxo_stats.used_taxa)"] --&gt; T["node taxonomy\n/api/taxon_set/query\ntype P or M, aphia_id, lineage"]
-  T --&gt; D["taxa_decide()\naphia | name_match | ancestor | excluded"]
-  D --&gt; W["taxa_worms_fill()\nworrms by AphiaID or exact name\nvalid name, rank, lineage, LSID"]
-  W --&gt; L[("metadata/taxa_lookup.csv\nreviewed by a taxonomist")]
-  L --&gt; O["03 OBIS: assert_taxa_resolved()"]
+<pre class="mermaid mermaid-js">%%{init: {"flowchart": {"wrappingWidth": 220, "nodeSpacing": 30, "rankSpacing": 60}}}%%
+flowchart LR
+  C["categories used by the project&lt;br/&gt;(taxo_stats.used_taxa)"]:::node --&gt; T["node taxonomy&lt;br/&gt;/api/taxon_set/query&lt;br/&gt;type P or M, aphia_id, lineage"]:::node
+  T --&gt; D["taxa_decide()&lt;br/&gt;aphia | name_match | ancestor | excluded"]:::core
+  D --&gt; W["taxa_worms_fill()&lt;br/&gt;worrms by AphiaID or exact name&lt;br/&gt;valid name, rank, lineage, LSID"]:::core
+  W --&gt; L[("metadata/taxa_lookup.csv&lt;br/&gt;reviewed by a taxonomist")]:::store
+  L --&gt; O["03 OBIS: assert_taxa_resolved()"]:::core
+  classDef node  fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
+  classDef core  fill:#e6f1ea,stroke:#4f8a66,color:#173322
+  classDef store fill:#f3f0ea,stroke:#a08c6a,color:#3a2e1c
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -623,7 +629,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/oceanmetrics\.github\.io\/ecotaxa-demo\/");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
@@ -956,67 +962,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  C[<span class="ot">"</span><span class="st">categories used by the project</span><span class="ch">\n</span><span class="st">(taxo_stats.used_taxa)</span><span class="ot">"</span>] --&gt; T[<span class="ot">"</span><span class="st">node taxonomy</span><span class="ch">\n</span><span class="st">/api/taxon_set/query</span><span class="ch">\n</span><span class="st">type P or M, aphia_id, lineage</span><span class="ot">"</span>]</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  T --&gt; D[<span class="ot">"</span><span class="st">taxa_decide()</span><span class="ch">\n</span><span class="st">aphia | name_match | ancestor | excluded</span><span class="ot">"</span>]</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  D --&gt; W[<span class="ot">"</span><span class="st">taxa_worms_fill()</span><span class="ch">\n</span><span class="st">worrms by AphiaID or exact name</span><span class="ch">\n</span><span class="st">valid name, rank, lineage, LSID</span><span class="ot">"</span>]</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  W --&gt; L[(<span class="ot">"</span><span class="st">metadata/taxa_lookup.csv</span><span class="ch">\n</span><span class="st">reviewed by a taxonomist</span><span class="ot">"</span>)]</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  L --&gt; O[<span class="ot">"</span><span class="st">03 OBIS: assert_taxa_resolved()</span><span class="ot">"</span>]</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="fu">## Rules</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Category <span class="pp">|</span> Rule <span class="pp">|</span> Result <span class="pp">|</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> root <span class="in">`not-living`</span> or <span class="in">`temporary`</span> (<span class="in">`detritus&lt;not-living`</span>, <span class="in">`t001`</span>) <span class="pp">|</span> never an occurrence <span class="pp">|</span> <span class="in">`excluded`</span> <span class="pp">|</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> phylogenetic (type P) with an <span class="in">`aphia_id`</span> on the node <span class="pp">|</span> use it, verify in WoRMS, publish under the valid name <span class="pp">|</span> <span class="in">`aphia`</span> <span class="pp">|</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> phylogenetic without an <span class="in">`aphia_id`</span> <span class="pp">|</span> exact name match in WoRMS; no hit stops the build <span class="pp">|</span> <span class="in">`name_match`</span> / <span class="in">`unresolved`</span> <span class="pp">|</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> morphological under Biota (<span class="in">`egg&lt;other`</span>, <span class="in">`nauplii&lt;Cyclopoida`</span>) <span class="pp">|</span> nearest ancestor with an <span class="in">`aphia_id`</span>, unless it is only Biota <span class="pp">|</span> <span class="in">`ancestor`</span> / <span class="in">`excluded`</span> <span class="pp">|</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>The decision is pure and tested without the network (<span class="in">`tests/testthat/test-taxa.R`</span>); WoRMS is injected, so the</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>same code runs against a canned WoRMS in the tests and against <span class="in">`worrms`</span> here.</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(worrms, dplyr, readr, tibble, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>PROJECT_ID <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>LOOKUP_CSV <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"metadata/taxa_lookup.csv"</span>)</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="fu">## The node's own taxonomy for the categories in use</span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: taxa</span></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>used <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_taxo_stats</span>(PROJECT_ID)<span class="sc">$</span>used_taxa</span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>taxa <span class="ot">&lt;-</span> <span class="fu">ecotaxa_taxa</span>(used)</span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="co"># the ancestors too, so a morphological category can be re-parented onto a living one</span></span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>anc  <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">as.integer</span>(<span class="fu">unlist</span>(<span class="fu">strsplit</span>(taxa<span class="sc">$</span>id_lineage, <span class="st">","</span>))), taxa<span class="sc">$</span>ecotaxa_id)</span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>taxa <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(taxa, <span class="fu">ecotaxa_taxa</span>(anc)) <span class="sc">|&gt;</span> <span class="fu">distinct</span>(ecotaxa_id, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>taxa <span class="sc">|&gt;</span> <span class="fu">filter</span>(ecotaxa_id <span class="sc">%in%</span> used) <span class="sc">|&gt;</span> <span class="fu">select</span>(ecotaxa_id, display_name, type, rank, aphia_id, lineage)</span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="fu">## Decide, then fill from WoRMS</span></span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lookup</span></span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>decided <span class="ot">&lt;-</span> <span class="fu">taxa_decide</span>(taxa) <span class="sc">|&gt;</span> <span class="fu">filter</span>(ecotaxa_id <span class="sc">%in%</span> used)</span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>lookup  <span class="ot">&lt;-</span> <span class="fu">taxa_worms_fill</span>(decided)</span>
-<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="fu">write_taxa_lookup</span>(lookup, LOOKUP_CSV)</span>
-<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>lookup <span class="sc">|&gt;</span> <span class="fu">select</span>(ecotaxa_id, ecotaxa_name, decision, aphia_id, scientific_name, rank, status, note)</span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: summary</span></span>
-<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>lookup <span class="sc">|&gt;</span> <span class="fu">count</span>(decision)</span>
-<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="in">`metadata/taxa_lookup.csv`</span> is committed: it is the artifact a taxonomist reviews and the one notebook 03 reads.</span>
-<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>An <span class="in">`unresolved`</span> row stops notebook 03 until someone edits the CSV (set <span class="in">`decision`</span> and <span class="in">`aphia_id`</span> by hand) or</span>
-<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>fixes the category on the node.</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>%<span class="dt">%</span>{init: {<span class="ot">"</span><span class="st">flowchart</span><span class="ot">"</span>: {<span class="ot">"</span><span class="st">wrappingWidth</span><span class="ot">"</span>: <span class="dv">220</span>, <span class="ot">"</span><span class="st">nodeSpacing</span><span class="ot">"</span>: <span class="dv">30</span>, <span class="ot">"</span><span class="st">rankSpacing</span><span class="ot">"</span>: <span class="dv">60</span>}}}%%</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>flowchart LR</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  C[<span class="ot">"</span><span class="st">categories used by the project&lt;br/&gt;(taxo_stats.used_taxa)</span><span class="ot">"</span>]:::node --&gt; T[<span class="ot">"</span><span class="st">node taxonomy&lt;br/&gt;/api/taxon_set/query&lt;br/&gt;type P or M, aphia_id, lineage</span><span class="ot">"</span>]:::node</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  T --&gt; D[<span class="ot">"</span><span class="st">taxa_decide()&lt;br/&gt;aphia | name_match | ancestor | excluded</span><span class="ot">"</span>]:::core</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  D --&gt; W[<span class="ot">"</span><span class="st">taxa_worms_fill()&lt;br/&gt;worrms by AphiaID or exact name&lt;br/&gt;valid name, rank, lineage, LSID</span><span class="ot">"</span>]:::core</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  W --&gt; L[(<span class="ot">"</span><span class="st">metadata/taxa_lookup.csv&lt;br/&gt;reviewed by a taxonomist</span><span class="ot">"</span>)]:::store</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  L --&gt; O[<span class="ot">"</span><span class="st">03 OBIS: assert_taxa_resolved()</span><span class="ot">"</span>]:::core</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  classDef node  fill:<span class="co">#ffffff,stroke:#8a9bb0,color:#1f2d3d</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  classDef core  fill:<span class="co">#e6f1ea,stroke:#4f8a66,color:#173322</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  classDef store fill:<span class="co">#f3f0ea,stroke:#a08c6a,color:#3a2e1c</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="fu">## Rules</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Category <span class="pp">|</span> Rule <span class="pp">|</span> Result <span class="pp">|</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> root <span class="in">`not-living`</span> or <span class="in">`temporary`</span> (<span class="in">`detritus&lt;not-living`</span>, <span class="in">`t001`</span>) <span class="pp">|</span> never an occurrence <span class="pp">|</span> <span class="in">`excluded`</span> <span class="pp">|</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> phylogenetic (type P) with an <span class="in">`aphia_id`</span> on the node <span class="pp">|</span> use it, verify in WoRMS, publish under the valid name <span class="pp">|</span> <span class="in">`aphia`</span> <span class="pp">|</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> phylogenetic without an <span class="in">`aphia_id`</span> <span class="pp">|</span> exact name match in WoRMS; no hit stops the build <span class="pp">|</span> <span class="in">`name_match`</span> / <span class="in">`unresolved`</span> <span class="pp">|</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> morphological under Biota (<span class="in">`egg&lt;other`</span>, <span class="in">`nauplii&lt;Cyclopoida`</span>) <span class="pp">|</span> nearest ancestor with an <span class="in">`aphia_id`</span>, unless it is only Biota <span class="pp">|</span> <span class="in">`ancestor`</span> / <span class="in">`excluded`</span> <span class="pp">|</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>The decision is pure and tested without the network (<span class="in">`tests/testthat/test-taxa.R`</span>); WoRMS is injected, so the</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>same code runs against a canned WoRMS in the tests and against <span class="in">`worrms`</span> here.</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(worrms, dplyr, readr, tibble, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>PROJECT_ID <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>LOOKUP_CSV <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"metadata/taxa_lookup.csv"</span>)</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="fu">## The node's own taxonomy for the categories in use</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: taxa</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>used <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_taxo_stats</span>(PROJECT_ID)<span class="sc">$</span>used_taxa</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>taxa <span class="ot">&lt;-</span> <span class="fu">ecotaxa_taxa</span>(used)</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="co"># the ancestors too, so a morphological category can be re-parented onto a living one</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>anc  <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">as.integer</span>(<span class="fu">unlist</span>(<span class="fu">strsplit</span>(taxa<span class="sc">$</span>id_lineage, <span class="st">","</span>))), taxa<span class="sc">$</span>ecotaxa_id)</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>taxa <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(taxa, <span class="fu">ecotaxa_taxa</span>(anc)) <span class="sc">|&gt;</span> <span class="fu">distinct</span>(ecotaxa_id, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>taxa <span class="sc">|&gt;</span> <span class="fu">filter</span>(ecotaxa_id <span class="sc">%in%</span> used) <span class="sc">|&gt;</span> <span class="fu">select</span>(ecotaxa_id, display_name, type, rank, aphia_id, lineage)</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="fu">## Decide, then fill from WoRMS</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: lookup</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>decided <span class="ot">&lt;-</span> <span class="fu">taxa_decide</span>(taxa) <span class="sc">|&gt;</span> <span class="fu">filter</span>(ecotaxa_id <span class="sc">%in%</span> used)</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>lookup  <span class="ot">&lt;-</span> <span class="fu">taxa_worms_fill</span>(decided)</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="fu">write_taxa_lookup</span>(lookup, LOOKUP_CSV)</span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>lookup <span class="sc">|&gt;</span> <span class="fu">select</span>(ecotaxa_id, ecotaxa_name, decision, aphia_id, scientific_name, rank, status, note)</span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: summary</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>lookup <span class="sc">|&gt;</span> <span class="fu">count</span>(decision)</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="in">`metadata/taxa_lookup.csv`</span> is committed: it is the artifact a taxonomist reviews and the one notebook 03 reads.</span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>An <span class="in">`unresolved`</span> row stops notebook 03 until someone edits the CSV (set <span class="in">`decision`</span> and <span class="in">`aphia_id`</span> by hand) or</span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>fixes the category on the node.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
+<script src="libs/svg-pan-zoom.min.js"></script>
+<script src="libs/diagram.js"></script>
 
 
 

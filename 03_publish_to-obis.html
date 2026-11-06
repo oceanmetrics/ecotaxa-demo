@@ -108,11 +108,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="mermaid-theme" content="default">
 <script src="site_libs/quarto-diagram/mermaid.min.js"></script>
 <script src="site_libs/quarto-diagram/mermaid-init.js"></script>
 <link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
+<link rel="stylesheet" href="libs/diagram.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -217,25 +219,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div>
 <p></p><figure class="figure"><p></p>
 <div>
-<pre class="mermaid mermaid-js">flowchart LR
+<pre class="mermaid mermaid-js">%%{init: {"flowchart": {"wrappingWidth": 220, "nodeSpacing": 30, "rankSpacing": 60}}}%%
+flowchart LR
   subgraph et["EcoTaxa (REST API, token login)"]
     direction TB
-    P["project\n(instrument, license, contacts)"]
-    S["samples\n(lat, lon, date, depth, volume)"]
-    A["acquisitions\n(instrument settings)"]
-    O["objects\n(category, status validated / predicted,\nannotator, size features, image)"]
+    P["project&lt;br/&gt;(instrument, license, contacts)"]:::node
+    S["samples&lt;br/&gt;(lat, lon, date, depth, volume)"]:::node
+    A["acquisitions&lt;br/&gt;(instrument settings)"]:::node
+    O["objects&lt;br/&gt;(category, status validated / predicted,&lt;br/&gt;annotator, size features, image)"]:::node
     P --&gt; S --&gt; A --&gt; O
   end
-  O --&gt; X["01 export\nTSV + images\n(cached locally)"]
-  X --&gt; W["02 taxa\nEcoTaxa category to WoRMS\nreviewable lookup table:\nAphiaID, rank, or excluded\n(detritus, egg, t001)"]
-  W --&gt; E["03 Event core\none row per sample (+ acquisition)\neventID, eventDate, lat/lon, depth,\nsamplingProtocol, sampleSizeValue"]
-  W --&gt; OC["03 Occurrence\nvalidated objects aggregated\nper sample x taxon\nscientificNameID = WoRMS LSID\nidentificationVerificationStatus"]
-  W --&gt; M["03 eMoF\nabundance, concentration,\nbiovolume, size\nNERC P01 / P06 URIs"]
-  W -.-&gt; AC["Audubon Core (optional)\nimage URLs per object"]
-  E &amp; OC &amp; M &amp; AC --&gt; Z["EML + meta.xml\nDwC-A zip + manifest\nvalidate (obistools)"]
-  Z --&gt; IPT["OBIS-USA IPT\n(manual upload)"] --&gt; OBIS["OBIS"] --&gt; GBIF["GBIF"]
-  classDef ext fill:#eef3f8,stroke:#5b7a99,color:#1a2b3c;
-  class IPT,OBIS,GBIF ext;
+  O --&gt; X["01 export&lt;br/&gt;TSV + images&lt;br/&gt;(cached locally)"]:::node
+  X --&gt; W["02 taxa&lt;br/&gt;EcoTaxa category to WoRMS&lt;br/&gt;reviewable lookup table:&lt;br/&gt;AphiaID, rank, or excluded&lt;br/&gt;(detritus, egg, t001)"]:::core
+  W --&gt; E["03 Event core&lt;br/&gt;one row per sample (+ acquisition)&lt;br/&gt;eventID, eventDate, lat/lon, depth,&lt;br/&gt;samplingProtocol, sampleSizeValue"]:::core
+  W --&gt; OC["03 Occurrence&lt;br/&gt;validated objects aggregated&lt;br/&gt;per sample x taxon&lt;br/&gt;scientificNameID = WoRMS LSID&lt;br/&gt;identificationVerificationStatus"]:::core
+  W --&gt; M["03 eMoF&lt;br/&gt;abundance, concentration,&lt;br/&gt;biovolume, size&lt;br/&gt;NERC P01 / P06 URIs"]:::core
+  W -.-&gt; AC["Audubon Core (optional)&lt;br/&gt;image URLs per object"]:::core
+  E &amp; OC &amp; M &amp; AC --&gt; Z["EML + meta.xml&lt;br/&gt;DwC-A zip + manifest&lt;br/&gt;validate (obistools)"]:::core
+  Z --&gt; IPT["OBIS-USA IPT&lt;br/&gt;(manual upload)"]:::ext --&gt; OBIS["OBIS"]:::ext --&gt; GBIF["GBIF"]:::ext
+  classDef node     fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
+  classDef core     fill:#e6f1ea,stroke:#4f8a66,color:#173322
+  classDef ext      fill:#e8eff7,stroke:#5b7a99,color:#1a2b3c
+  style et fill:#f7f9fb,stroke:#cfd6de,color:#4a5a6a
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -789,7 +794,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "occurrence": 2,
     "emof": 4
   },
-  "generated_utc": "2026-11-06T12:47:41Z"
+  "generated_utc": "2026-11-06T12:55:30Z"
 }</code></pre>
 </div>
 </div>
@@ -932,7 +937,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/oceanmetrics\.github\.io\/ecotaxa-demo\/");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
@@ -1370,6 +1375,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
+<script src="libs/svg-pan-zoom.min.js"></script>
+<script src="libs/diagram.js"></script>
 
 
 
