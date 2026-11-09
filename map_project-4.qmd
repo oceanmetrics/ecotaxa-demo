@@ -1,0 +1,39 @@
+---
+title: "Map of the SFER MBON PlanktoScope samples"
+subtitle: "EcoTaxa project 4, migrated from the Ifremer node"
+toc: false
+code-tools: false
+execute:
+  echo: false
+---
+
+Each point is one sample. Click a point for its name and a link to its images on the
+[demo node](https://ecotaxa.oceanmetrics.io/explore/?projid=4). Positions are read from the node's API when this
+page is built.
+
+```{r}
+#| label: setup
+librarian::shelf(dplyr, glue, here, htmltools, httr2, leaflet, tibble, quiet = TRUE)
+for (f in list.files(here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
+PROJECT_ID <- 4L
+URL_NODE   <- "https://ecotaxa.oceanmetrics.io"
+
+x       <- split_mappable_samples(ecotaxa_project_samples(PROJECT_ID, base = URL_NODE))
+cap_map <- samples_map_caption(x$mapped, x$dropped, "EcoTaxa project 4")
+```
+
+```{r}
+#| label: fig-samples
+#| fig-cap: !expr cap_map
+pts <- x$mapped |>
+  mutate(
+    url   = sprintf("%s/explore/?projid=%d&samples=%.0f", URL_NODE, PROJECT_ID, sample_id),
+    popup = glue("<b>{htmlEscape(orig_id)}</b><br>{round(lat, 3)}, {round(lon, 3)}<br>",
+                 "<a href='{url}' target='_blank'>View images</a>"))
+
+leaflet(pts, width = "100%", height = 560) |>
+  addProviderTiles(providers$Esri.OceanBasemap) |>
+  addCircleMarkers(
+    lng = ~lon, lat = ~lat, popup = ~popup, label = ~orig_id,
+    radius = 6, stroke = TRUE, color = "#7a1f12", weight = 1, fillColor = "#d1492e", fillOpacity = 0.75)
+```

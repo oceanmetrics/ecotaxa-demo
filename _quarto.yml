@@ -10,6 +10,7 @@ project:
     - 02_taxa_worms.qmd
     - 03_publish_to-obis.qmd
     - 04_archive_to-ncei.qmd
+    - map_project-4.qmd
 
 website:
   title: "EcoTaxa demo: pipelines to OBIS and NCEI"
@@ -26,6 +27,8 @@ website:
         text: "03 OBIS"
       - href: 04_archive_to-ncei.qmd
         text: "04 NCEI"
+      - href: map_project-4.qmd
+        text: "Sample map"
     right:
       - href: https://ecotaxa.oceanmetrics.io/prj/2
         text: Demo node
