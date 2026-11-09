@@ -154,6 +154,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="nav-link active" href="./04_archive_to-ncei.html" aria-current="page"> 
 <span class="menu-text">04 NCEI</span></a>
   </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./map_project-4.html"> 
+<span class="menu-text">Sample map</span></a>
+  </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
@@ -267,7 +271,7 @@ flowchart LR
  $ source      : chr "data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"
  $ tsv         : chr [1:2] "ecotaxa_m106_mn01_n1_sml.tsv" "ecotaxa_m106_mn01_n2_sml.tsv"
  $ n_objects   : int 8
- $ exported_utc: chr "2026-11-06T13:54:04Z"
+ $ exported_utc: chr "2026-11-09T19:43:24Z"
  $ image_dir   : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data-raw/import_test"</code></pre>
 </div>
 </div>
@@ -286,7 +290,7 @@ flowchart LR
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "ecotaxa_m106_mn01_n1_sml.tsv"   "ecotaxa_m106_mn01_n2_sml.tsv"  
-[3] "ecotaxa-om-prj2_2026-11-06.zip" "eml.xml"                       </code></pre>
+[3] "ecotaxa-om-prj2_2026-11-09.zip" "eml.xml"                       </code></pre>
 </div>
 </div>
 </section>
@@ -310,7 +314,7 @@ flowchart LR
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 4
- $ bag      : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/ncei/ecotaxa-om-prj2_2026-11-06"
+ $ bag      : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/ncei/ecotaxa-om-prj2_2026-11-09"
  $ n_payload: int 13
  $ bytes    : num 48992
  $ n_images : int 8</code></pre>
@@ -322,7 +326,7 @@ flowchart LR
 <div class="cell-output cell-output-stdout">
 <pre><code>bag-info.txt
 bagit.txt
-data/dwca/ecotaxa-om-prj2_2026-11-06.zip
+data/dwca/ecotaxa-om-prj2_2026-11-09.zip
 data/ecotaxa_export/ecotaxa_m106_mn01_n1_sml.tsv
 data/ecotaxa_export/ecotaxa_m106_mn01_n2_sml.tsv
 data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_409.jpg
@@ -346,8 +350,8 @@ tagmanifest-sha256.txt</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Source-Organization: Ocean Metrics
-External-Identifier: ecotaxa-om-prj2_2026-11-06
-Bagging-Date: 2026-11-06
+External-Identifier: ecotaxa-om-prj2_2026-11-09
+Bagging-Date: 2026-11-09
 Payload-Oxum: 48992.13
 Bag-Size: 0.05 MB
 External-Description: EcoTaxa project export (images, TSV, Darwin Core Archive, metadata) from https://ecotaxa.oceanmetrics.io</code></pre>
@@ -357,7 +361,7 @@ External-Description: EcoTaxa project export (images, TSV, Darwin Core Archive, 
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"manifest-sha256.txt"</span>)), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>d4ba3b7571f58a5cbe49546803d6339063dd2aef62339fdad20b9f7099b8643a data/dwca/ecotaxa-om-prj2_2026-11-06.zip
+<pre><code>f11b2096a64e06a8bac0978edc03326e0610ad84a8dd03f28bb6e2d2054f1eb2 data/dwca/ecotaxa-om-prj2_2026-11-09.zip
 a4d213431182a3e789c3acc144f37566b8021fc819ac08314b11723fb2aca599 data/ecotaxa_export/ecotaxa_m106_mn01_n1_sml.tsv
 c3853fd7c7772ab003880964af8a94d4e4c741063fb3c3ff0f9d8772752d0580 data/ecotaxa_export/ecotaxa_m106_mn01_n2_sml.tsv
 b1fa990e5506362e9800f5c680f5fc91861ad8e648731b39e2a2e00fe6447a51 data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_409.jpg
@@ -368,8 +372,8 @@ c306d6cf252c643d30768bf289bf482c44a6c4ecf8660a89463e91a4e2023466 data/images/m10
 49c177d9947596053b66dad8537920926c7232ce5ed8416c8f842c1aeb9ae102 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1.jpg
 230b403667dbb197969c20e3eb0ded7a58f42a9322486e1fa421695ff5f69fcd data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1081.jpg
 7d297b65336d3750341dbec2ce75e77fe6dc2f6bc722fb62585d282a89152d75 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1111.jpg
-0d1f3761a5af3e136a2d647ccc0a48e0c2640f522a7fc0bb713c997950d75a3f data/metadata/dataset.json
-1ad935417deaeb4f6806e0c5b35b56e86b5d9952704bf2b7685f3268cc2ca7ad data/metadata/eml.xml</code></pre>
+d1d35ca749040d0c504463758d527e9a999e4ca8714e3f622ee43e9934db5c10 data/metadata/dataset.json
+6eb0c08b7ebab7b89e9ecb52f6eec230d465c73286abd33bb3386f8f25d421ae data/metadata/eml.xml</code></pre>
 </div>
 </div>
 </section>

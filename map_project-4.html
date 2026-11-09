@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Map of the SFER MBON PlanktoScope samples – EcoTaxa demo: pipelines to OBIS and NCEI</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-445b8638c3d06994fee0907d791121c4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<link href="site_libs/leaflet-1.3.1/leaflet.css" rel="stylesheet">
+<script src="site_libs/leaflet-1.3.1/leaflet.js"></script>
+<link href="site_libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet">
+<script src="site_libs/proj4-2.6.2/proj4.min.js"></script>
+<script src="site_libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
+<link href="site_libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet">
+<script src="site_libs/leaflet-binding-2.2.3/leaflet.js"></script>
+<script src="site_libs/leaflet-providers-3.0.0/leaflet-providers.js"></script>
+<script src="site_libs/leaflet-providers-plugin-2.2.3/leaflet-providers-plugin.js"></script>
+
+
+<link rel="stylesheet" href="libs/diagram.css">
+</head>
+
+<body class="nav-fixed fullcontent quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">EcoTaxa demo: pipelines to OBIS and NCEI</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Overview</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./01_export_ecotaxa.html"> 
+<span class="menu-text">01 Export</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./02_taxa_worms.html"> 
+<span class="menu-text">02 Taxa</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./03_publish_to-obis.html"> 
+<span class="menu-text">03 OBIS</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./04_archive_to-ncei.html"> 
+<span class="menu-text">04 NCEI</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./map_project-4.html" aria-current="page"> 
+<span class="menu-text">Sample map</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://ecotaxa.oceanmetrics.io/prj/2"> 
+<span class="menu-text">Demo node</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/oceanmetrics/ecotaxa-demo"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Map of the SFER MBON PlanktoScope samples</h1>
+<p class="subtitle lead">EcoTaxa project 4, migrated from the Ifremer node</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Each point is one sample. Click a point for its name and a link to its images on the <a href="https://ecotaxa.oceanmetrics.io/explore/?projid=4">demo node</a>. Positions are read from the node’s API when this page is built.</p>
+<div class="cell">
+<div id="fig-samples" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-samples-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="htmlwidget-c8c224eeef3bc691dcb0" style="width:100%;height:560px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-c8c224eeef3bc691dcb0">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.OceanBasemap",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircleMarkers","args":[[24.538,25.01,24.478,24.538,25.01,24.478,24.538,25.009,24.478,24.538,25.01,24.478,24.538,25.01,24.478,24.538,25.01,24.478,24.538,24.478,24.538,24.5366,25.01,24.4759,24.538,25.01,24.538,25.01,24.478,24.538,25.01,25.01,24.478,25.01,24.538,25.01,24.478,25.01,24.478,25.01,24.478,24.536,25.01,24.478,24.478,25.01,24.538,25.01,24.538,25.01,25.01,24.478,24.538,24.478,24.538,24.478,24.538,24.538,24.538,25.01,24.478,24.538,25.01,24.478,24.538,25.01,24.478,25.3453,25.3517,24.538,25.01,24.478,25.01,24.478,24.538,25.01,24.478,25.3453,25.3517,24.538,25.01,24.478,24.538,25.01,24.478,24.538,25.01,24.478,24.538,25.01,24.478,24.538,25.01,24.478,24.538,25.01,24.478,25.935,24.538,25.01,24.478,24.538,25.01,24.478],[-81.413,-80.38,-81.717,-81.413,-80.38200000000001,-81.717,-81.41500000000001,-80.383,-81.717,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.413,-81.717,-81.413,-81.4209,-80.38,-81.7197,-81.413,-80.38,-81.413,-80.38,-81.717,-81.413,-80.38,-80.38,-81.717,-80.38,-81.413,-80.38,-81.717,-80.38,-81.717,-80.38,-81.717,-81.413,-80.38,-81.717,-81.717,-80.38,-81.413,-80.38,-81.413,-80.38,-80.38,-81.717,-81.413,-81.717,-81.413,-81.717,-81.413,-81.413,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.1528,-81.265,-81.413,-80.38,-81.717,-80.38,-81.717,-81.413,-80.38,-81.717,-81.1528,-81.265,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717,-85.02200000000001,-81.413,-80.38,-81.717,-81.413,-80.38,-81.717],6,null,null,{"interactive":true,"className":"","stroke":true,"color":"#7a1f12","weight":1,"opacity":0.5,"fill":true,"fillColor":"#d1492e","fillOpacity":0.75},null,null,["<b>h23138_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000001' target='_blank'>View images<\/a>","<b>h23138_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000002' target='_blank'>View images<\/a>","<b>h23138_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000003' target='_blank'>View images<\/a>","<b>h24013_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000004' target='_blank'>View images<\/a>","<b>h24013_MR_64um<\/b><br>25.01, -80.382<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000005' target='_blank'>View images<\/a>","<b>h24013_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000006' target='_blank'>View images<\/a>","<b>h24062_LK_64um<\/b><br>24.538, -81.415<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000007' target='_blank'>View images<\/a>","<b>h24062_MR_64um<\/b><br>25.009, -80.383<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000008' target='_blank'>View images<\/a>","<b>h24062_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000009' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26045_lk_200um_20260218<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000010' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26045_mr_200um_20260217<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000011' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26045_ws_200um_20260218<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000012' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26081_lk_200um_20260327<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000013' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26081_mr_200um_20260327<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000014' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26081_ws_200um_20260328<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000015' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26137_lk_200um_20260521<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000016' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26137_mr_200um_20260521<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000017' target='_blank'>View images<\/a>","<b>sfer_mbon_hg26137_ws_200um_20260521<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000018' target='_blank'>View images<\/a>","<b>sfer_mbon_sv18067_lk_200um_20180309<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000019' target='_blank'>View images<\/a>","<b>sfer_mbon_sv18067_ws_200um_20180309<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000020' target='_blank'>View images<\/a>","<b>sfer_mbon_sv18173_lk_200um_20180623<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000021' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15103_lk_200um_20150414<\/b><br>24.537, -81.421<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000022' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15103_mr_200um_20150413<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000023' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15103_ws_200um_20150414<\/b><br>24.476, -81.72<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000024' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15148_lk_200um_20150602<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000025' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15148_mr_200um_20150601<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000026' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15208_lk_200um_20150728<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000027' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15208_mr_200um_20150727<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000028' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15208_ws_200um_20150728<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000029' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15264_lk_200um_20150922<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000030' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15264_mr_200um_20150921<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000031' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15320_mr_200um_20151116<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000032' target='_blank'>View images<\/a>","<b>sfer_mbon_ws15320_ws_200um_20151117<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000033' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16004_mr_200um_20160104<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000034' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16074_lk_200um_20160301<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000035' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16074_mr_200um_20160314<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000036' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16074_ws_200um_20160301<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000037' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16130_mr_200um_20160509<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000038' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16130_ws_200um_20160510_real<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000039' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16207_mr_200um_20160725<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000040' target='_blank'>View images<\/a>","<b>sfer_mbon_ws16207_ws_200um_20160726<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000041' target='_blank'>View images<\/a>","<b>sfer_mbon_ws17086_lk_200um_20170328<\/b><br>24.536, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000042' target='_blank'>View images<\/a>","<b>sfer_mbon_ws17086_mr_200um_20170327<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000043' target='_blank'>View images<\/a>","<b>sfer_mbon_ws17170_ws_200um_20170620<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000044' target='_blank'>View images<\/a>","<b>sfer_mbon_ws17282_ws_200um_20171010<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000045' target='_blank'>View images<\/a>","<b>sfer_mbon_ws18008_mr_200um_20180109<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000046' target='_blank'>View images<\/a>","<b>sfer_mbon_ws18218_lk_200um_20180718<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000047' target='_blank'>View images<\/a>","<b>sfer_mbon_ws18218_mr_200um_20180806<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000048' target='_blank'>View images<\/a>","<b>sfer_mbon_ws18285_lk_200um_20181013<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000049' target='_blank'>View images<\/a>","<b>sfer_mbon_ws18285_mr_200um_20181012<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000050' target='_blank'>View images<\/a>","<b>sfer_mbon_ws19028_mr_200um_20190128<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000051' target='_blank'>View images<\/a>","<b>sfer_mbon_ws19028_ws_200um_20190129<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000052' target='_blank'>View images<\/a>","<b>sfer_mbon_ws19210_lk_200um_20190730<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000053' target='_blank'>View images<\/a>","<b>sfer_mbon_ws19210_ws_200um_20190730<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000054' target='_blank'>View images<\/a>","<b>sfer_mbon_ws19266_lk_200um_20190924<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000055' target='_blank'>View images<\/a>","<b>sfer_mbon_ws19266_ws_200um_20190924<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000056' target='_blank'>View images<\/a>","<b>sfer_mbon_ws20006_lk_200um_20200107<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000057' target='_blank'>View images<\/a>","<b>sfer_mbon_ws20230_lk_200um_20200819<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000058' target='_blank'>View images<\/a>","<b>ws21277_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000060' target='_blank'>View images<\/a>","<b>ws21277_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000061' target='_blank'>View images<\/a>","<b>ws21277_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000062' target='_blank'>View images<\/a>","<b>ws21338_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000063' target='_blank'>View images<\/a>","<b>ws21338_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000064' target='_blank'>View images<\/a>","<b>ws21338_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000065' target='_blank'>View images<\/a>","<b>ws22022_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000066' target='_blank'>View images<\/a>","<b>ws22022_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000067' target='_blank'>View images<\/a>","<b>ws22022_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000068' target='_blank'>View images<\/a>","<b>ws22072_54_64um<\/b><br>25.345, -81.153<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000069' target='_blank'>View images<\/a>","<b>ws22072_57_64um<\/b><br>25.352, -81.265<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000070' target='_blank'>View images<\/a>","<b>ws22072_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000071' target='_blank'>View images<\/a>","<b>ws22072_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000072' target='_blank'>View images<\/a>","<b>ws22072_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000073' target='_blank'>View images<\/a>","<b>ws22141_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000074' target='_blank'>View images<\/a>","<b>ws22141_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000075' target='_blank'>View images<\/a>","<b>ws22281_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000076' target='_blank'>View images<\/a>","<b>ws22281_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000077' target='_blank'>View images<\/a>","<b>ws22281_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000078' target='_blank'>View images<\/a>","<b>ws22337_54_64um<\/b><br>25.345, -81.153<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000079' target='_blank'>View images<\/a>","<b>ws22337_57_64um<\/b><br>25.352, -81.265<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000080' target='_blank'>View images<\/a>","<b>ws22337_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000081' target='_blank'>View images<\/a>","<b>ws22337_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000082' target='_blank'>View images<\/a>","<b>ws22337_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000083' target='_blank'>View images<\/a>","<b>ws23011_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000084' target='_blank'>View images<\/a>","<b>ws23011_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000085' target='_blank'>View images<\/a>","<b>ws23011_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000086' target='_blank'>View images<\/a>","<b>ws23061_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000087' target='_blank'>View images<\/a>","<b>ws23061_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000088' target='_blank'>View images<\/a>","<b>ws23061_ws_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000089' target='_blank'>View images<\/a>","<b>ws23203_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000090' target='_blank'>View images<\/a>","<b>ws23203_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000091' target='_blank'>View images<\/a>","<b>ws23203_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000092' target='_blank'>View images<\/a>","<b>ws23259_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000093' target='_blank'>View images<\/a>","<b>ws23259_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000094' target='_blank'>View images<\/a>","<b>ws23259_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000095' target='_blank'>View images<\/a>","<b>ws24139_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000096' target='_blank'>View images<\/a>","<b>ws24139_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000097' target='_blank'>View images<\/a>","<b>ws24139_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000098' target='_blank'>View images<\/a>","<b>ws24205_BG20_64um<\/b><br>25.935, -85.022<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000099' target='_blank'>View images<\/a>","<b>ws24205_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000100' target='_blank'>View images<\/a>","<b>ws24205_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000101' target='_blank'>View images<\/a>","<b>ws24205_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000102' target='_blank'>View images<\/a>","<b>ws24258_LK_64um<\/b><br>24.538, -81.413<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000103' target='_blank'>View images<\/a>","<b>ws24258_MR_64um<\/b><br>25.01, -80.38<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000104' target='_blank'>View images<\/a>","<b>ws24258_WS_64um<\/b><br>24.478, -81.717<br><a href='https://ecotaxa.oceanmetrics.io/explore/?projid=4&samples=4000105' target='_blank'>View images<\/a>"],null,["h23138_LK_64um","h23138_MR_64um","h23138_WS_64um","h24013_LK_64um","h24013_MR_64um","h24013_WS_64um","h24062_LK_64um","h24062_MR_64um","h24062_WS_64um","sfer_mbon_hg26045_lk_200um_20260218","sfer_mbon_hg26045_mr_200um_20260217","sfer_mbon_hg26045_ws_200um_20260218","sfer_mbon_hg26081_lk_200um_20260327","sfer_mbon_hg26081_mr_200um_20260327","sfer_mbon_hg26081_ws_200um_20260328","sfer_mbon_hg26137_lk_200um_20260521","sfer_mbon_hg26137_mr_200um_20260521","sfer_mbon_hg26137_ws_200um_20260521","sfer_mbon_sv18067_lk_200um_20180309","sfer_mbon_sv18067_ws_200um_20180309","sfer_mbon_sv18173_lk_200um_20180623","sfer_mbon_ws15103_lk_200um_20150414","sfer_mbon_ws15103_mr_200um_20150413","sfer_mbon_ws15103_ws_200um_20150414","sfer_mbon_ws15148_lk_200um_20150602","sfer_mbon_ws15148_mr_200um_20150601","sfer_mbon_ws15208_lk_200um_20150728","sfer_mbon_ws15208_mr_200um_20150727","sfer_mbon_ws15208_ws_200um_20150728","sfer_mbon_ws15264_lk_200um_20150922","sfer_mbon_ws15264_mr_200um_20150921","sfer_mbon_ws15320_mr_200um_20151116","sfer_mbon_ws15320_ws_200um_20151117","sfer_mbon_ws16004_mr_200um_20160104","sfer_mbon_ws16074_lk_200um_20160301","sfer_mbon_ws16074_mr_200um_20160314","sfer_mbon_ws16074_ws_200um_20160301","sfer_mbon_ws16130_mr_200um_20160509","sfer_mbon_ws16130_ws_200um_20160510_real","sfer_mbon_ws16207_mr_200um_20160725","sfer_mbon_ws16207_ws_200um_20160726","sfer_mbon_ws17086_lk_200um_20170328","sfer_mbon_ws17086_mr_200um_20170327","sfer_mbon_ws17170_ws_200um_20170620","sfer_mbon_ws17282_ws_200um_20171010","sfer_mbon_ws18008_mr_200um_20180109","sfer_mbon_ws18218_lk_200um_20180718","sfer_mbon_ws18218_mr_200um_20180806","sfer_mbon_ws18285_lk_200um_20181013","sfer_mbon_ws18285_mr_200um_20181012","sfer_mbon_ws19028_mr_200um_20190128","sfer_mbon_ws19028_ws_200um_20190129","sfer_mbon_ws19210_lk_200um_20190730","sfer_mbon_ws19210_ws_200um_20190730","sfer_mbon_ws19266_lk_200um_20190924","sfer_mbon_ws19266_ws_200um_20190924","sfer_mbon_ws20006_lk_200um_20200107","sfer_mbon_ws20230_lk_200um_20200819","ws21277_LK_64um","ws21277_MR_64um","ws21277_WS_64um","ws21338_LK_64um","ws21338_MR_64um","ws21338_WS_64um","ws22022_LK_64um","ws22022_MR_64um","ws22022_WS_64um","ws22072_54_64um","ws22072_57_64um","ws22072_LK_64um","ws22072_MR_64um","ws22072_WS_64um","ws22141_MR_64um","ws22141_WS_64um","ws22281_LK_64um","ws22281_MR_64um","ws22281_WS_64um","ws22337_54_64um","ws22337_57_64um","ws22337_LK_64um","ws22337_MR_64um","ws22337_WS_64um","ws23011_LK_64um","ws23011_MR_64um","ws23011_WS_64um","ws23061_LK_64um","ws23061_MR_64um","ws23061_ws_64um","ws23203_LK_64um","ws23203_MR_64um","ws23203_WS_64um","ws23259_LK_64um","ws23259_MR_64um","ws23259_WS_64um","ws24139_LK_64um","ws24139_MR_64um","ws24139_WS_64um","ws24205_BG20_64um","ws24205_LK_64um","ws24205_MR_64um","ws24205_WS_64um","ws24258_LK_64um","ws24258_MR_64um","ws24258_WS_64um"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[24.4759,25.935],"lng":[-85.02200000000001,-80.38]}},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-samples-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Positions of 104 of the 105 samples in EcoTaxa project 4. Dropped from the map because the position is not known: ws21093_MR_64um (latitude and longitude both 0 in the source data).
+</figcaption>
+</figure>
+</div>
+</div>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<script src="libs/svg-pan-zoom.min.js"></script>
+<script src="libs/diagram.js"></script>
+
+
+
+
+</body></html>
