@@ -100,14 +100,23 @@ ecotaxa_project_taxo_stats <- function(project_id, base = ecotaxa_url()) {
        nb_unclassified = s$nb_unclassified)
 }
 
-# start a general export job (TSV + images) for one project; returns the job id
-ecotaxa_export_start <- function(project_id, token, with_images = "first",
-                                 with_types_row = TRUE, base = ecotaxa_url()) {
-  body <- list(
+# the body of POST /api/object_set/export/general (GeneralExportReq in the node's OpenAPI):
+# split_by is one of sample, acquisition, taxon, none; with_images one of all, first, none
+EXPORT_SPLIT_BY   <- c("sample", "acquisition", "taxon", "none")
+EXPORT_WITH_IMAGES <- c("all", "first", "none")
+ecotaxa_export_body <- function(project_id, with_images = "first", with_types_row = TRUE, split_by = "sample") {
+  stopifnot(with_images %in% EXPORT_WITH_IMAGES, split_by %in% EXPORT_SPLIT_BY)
+  list(
     filters = structure(list(), names = character()),
     request = list(project_id = as.integer(project_id), with_images = with_images,
                    with_types_row = with_types_row, with_internal_ids = FALSE,
-                   only_annotations = FALSE, split_by = "", out_to_ftp = FALSE))
+                   only_annotations = FALSE, split_by = split_by, out_to_ftp = FALSE))
+}
+
+# start a general export job (TSV + images) for one project; returns the job id
+ecotaxa_export_start <- function(project_id, token, with_images = "first",
+                                 with_types_row = TRUE, base = ecotaxa_url()) {
+  body <- ecotaxa_export_body(project_id, with_images, with_types_row)
   j <- ecotaxa_req("object_set/export/general", token, base) |>
     httr2::req_body_json(body) |>
     httr2::req_perform() |>

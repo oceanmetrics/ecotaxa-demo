@@ -43,3 +43,12 @@ test_that("a token alone counts as a login and is returned without calling the n
   withr::with_envvar(c(ECOTAXA_TOKEN = NA, ECOTAXA_USER = NA, ECOTAXA_PASSWORD = NA),
                      expect_false(ecotaxa_has_login()))
 })
+test_that("ecotaxa_export_body() sends values the node's GeneralExportReq accepts (regression: split_by '' was a 422)", {
+  b <- ecotaxa_export_body(4)
+  expect_equal(b$request$split_by, "sample")
+  expect_true(b$request$split_by %in% c("sample", "acquisition", "taxon", "none"))
+  expect_equal(b$request$with_images, "first"); expect_identical(b$request$project_id, 4L)
+  expect_equal(as.character(jsonlite::toJSON(b$filters)), "{}")
+  expect_error(ecotaxa_export_body(4, split_by = ""))
+  expect_error(ecotaxa_export_body(4, with_images = "yes"))
+})
