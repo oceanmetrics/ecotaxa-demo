@@ -1,0 +1,139 @@
+---
+title: "05 Migrate a project from another EcoTaxa node"
+subtitle: "Backup zip → node import → node checks → notebooks 01–04, as done for project 4"
+execute:
+  eval: false
+---
+
+## What this is
+
+The steps that took SFER MBON's PlanktoScope project (EcoTaxa 11310 on the Ifremer node, owner Enrique
+Montes) to project 4 on this node and through notebooks 01–04, 9–10 November 2026, written so the next project
+can follow them. The code below is **not run when the site renders**: it is the exact sequence, with the
+scripts in `scripts/`, to run by hand. Nothing here publishes to OBIS, GBIF or NCEI.
+
+| Where | Script | What it holds |
+|---|---|---|
+| laptop | `scripts/fetch_backup.sh` | Drive → node host, streamed through the laptop, then unzip |
+| node host | `scripts/node/ecotaxa_admin.py` | create project, import, job watch, placeholder users, access, verify, token, delete job |
+| node container | `scripts/node/schema_diff.py` | read-only comparison of the live DB with the back end's models |
+| node DB | `scripts/node/2026-11-10_schema_to_head.sql` | the one-off schema fix, with its runbook in the header |
+| laptop → mini | `scripts/launch_project.sh`, `scripts/render_project.sh` | token hand-off and the tmux render of 01–04 |
+
+Secrets stay on the node host (`/share/ecotaxa/.env`); people's names and emails stay in a git-ignored CSV.
+
+## 1. Fetch and unpack the backup
+
+The owner's "backup" export from the source node is a zip of one TSV per sample plus the images, in the
+import format. For project 4: `export__BAK_11310_20260616_1243.zip`, 8.5 GB, shared on Drive by Matt Biddle.
+
+```{bash}
+scripts/fetch_backup.sh 1dXWk_uKw-C9eahfdDKfIndI1gLv9SiEv bak_11310
+```
+
+Check the disk first: the zip and its unzipped copy were about 18 GB on a `/share` at 90 %. Keep both until
+the import is verified, then delete both.
+
+## 2. Create the project, import, credit the annotators
+
+```{bash}
+A='python3 -I - '; S=scripts/node/ecotaxa_admin.py
+ssh msens "$A create-project --title 'SFER MBON PlanktoScope (migrated from EcoTaxa 11310)' \
+  --instrument PlanktoScope --access 1 --manager-id 5 --contact-id 5" < $S   # 5 = Enrique's account
+ssh msens "$A import --project 4 --source bak_11310/unzipped" < $S          # path relative to /file_srv
+ssh msens "$A job --id 2 --wait" < $S                                       # about 3 h for project 4
+```
+
+- **Owner.** EcoTaxa has no "owner" role: the owner is a project manager and the contact person. Their account
+  must exist first (it did not at first; check `GET /users/search` rather than trusting memory).
+- **Annotators.** The import maps annotators by name or email. Five who had no account on this node were
+  created as **inactive placeholders** (status 0, a random password nobody keeps) so their validations stay
+  credited, rather than reassigned to the owner:
+
+```{bash}
+# scripts/node/users_<project>.csv, git-ignored: name,email[,organisation,country,reason]
+scp scripts/node/users_prj4.csv msens:/tmp/ && \
+  ssh msens "$A users --csv /tmp/users_prj4.csv && rm /tmp/users_prj4.csv" < $S
+```
+
+- **Access.** `1` ("public") still asks for a login; `2` ("open") lets anyone read without one, and only
+  members annotate or manage. Project 4 is open for link-only viewing by the group:
+
+```{bash}
+ssh msens "$A set-access --project 4 --access 2" < $S
+ssh msens "$A verify --project 4" < $S
+```
+
+### What the import gave (project 4)
+
+| | backup TSVs | database |
+|---|---|---|
+| samples | 105 | 105 |
+| rows / objects | 974,696 | 967,734 (951,833 predicted, 15,788 validated, 113 dubious) |
+| images | 974,696 | 974,696 |
+| categories | 75 | 73 in use, all in the node's taxonomy |
+
+The 6,962 extra rows are objects with a second image in a `2/` sub-folder; every pair is byte-identical (md5).
+They are the duplicates seen in the NCEI pilot; the general export with `with_images = "first"` (notebook 01)
+ships one image per object and so drops them.
+
+## 3. Check the node before exporting
+
+A node built with `manage.py build` can lack tables: it creates only the tables of model modules that happen
+to be imported, and stamps no alembic version. On msens1 `taxo_recast` and `projects_variables` were missing,
+so **every** general export failed. Compare first; it is read-only:
+
+```{bash}
+ssh msens 'docker exec -i -w /app ecotaxa-back python3 -' < scripts/node/schema_diff.py
+```
+
+An empty report, or only three `modify_nullable` lines on the `*_old_2_new` primary keys, is a match. If tables
+are missing, bring the DB forward, old to new, with each missing migration's own SQL
+(`alembic upgrade --sql <prev>:<rev>` inside `ecotaxa-back`), then `alembic stamp head` and the upstream
+operator step `alembic upgrade head`, which should then have nothing to do. Back up with `pg_dump -Fc` first.
+`scripts/node/2026-11-10_schema_to_head.sql` is the record of the 2026-11-10 fix and its runbook; do not re-run
+it on a DB that already has the tables.
+
+## 4. Run notebooks 01–04 on the project
+
+```{bash}
+scripts/launch_project.sh 4          # all four; or `scripts/launch_project.sh 4 04` to redo only 04
+ssh macmini 'tail -f ~/Github/oceanmetrics/ecotaxa-demo/data/run_project-4.log'
+```
+
+The render writes `_site_project-4/` on the mini, which `quarto publish` (from `_site/`) never uploads: a
+project's pages are published only on purpose. Before a project's first run, add its row to
+`metadata/projects.csv` (title, abstract, license, contact, organization) and expect notebook 02 to write
+`metadata/taxa_lookup_project-<id>.csv` for review.
+
+### Project 4, first full run
+
+| Step | Result |
+|---|---|
+| 01 export | 28 batches of at most 40,000 objects, 44 min; 105 TSVs, 967,734 images (11 GB) |
+| 02 taxa | 73 categories: 48 `aphia`, 10 `ancestor`, 15 `excluded`, 0 unresolved |
+| 03 OBIS | 373 events (105 samples, 268 acquisitions), 755 occurrences from 3,861 validated objects, 860 eMoF rows; no errors |
+| 04 NCEI | bag of 967,842 payload files, 10.05 GB, SHA-256 manifest, verified `ok`; 12 min |
+
+## 5. Share the packages for review
+
+The packages went to the group, not to a portal: a Drive subfolder shared as viewer with the email thread,
+uploaded from the mini (which has the same rclone remotes as the laptop). The NCEI bag is zipped without
+compression (`zip -0`): the images are JPEGs already.
+
+```{bash}
+cd data && zip -0 -r -q share_project-4/ecotaxa-om-prj4_2026-11-10_ncei-bag.zip ncei/ecotaxa-om-prj4_2026-11-10
+rclone copy share_project-4 "gdrive-ecoquants:project-4 packages 2026-11-10" --drive-root-folder-id <folder id>
+```
+
+## 6. Lessons for the next project
+
+1. **Run the real export early.** The demo's offline fallback hid a wrong request body; a real project
+   surfaced it, plus four more issues (see the lessons in [01](01_export_ecotaxa.qmd)).
+2. **Size every step for a million.** Batch the node's export by samples, vectorize per-file work, and print
+   counts, not listings ([04](04_archive_to-ncei.qmd)).
+3. **Check the node's schema** once per node (and after each back-end upgrade) with `schema_diff.py`.
+4. **Unknowns stay unknown.** 0,0 positions, volumes without units, sizes in pixels: publish nothing rather
+   than a guess, and ask the data owner ([03](03_publish_to-obis.qmd)).
+5. **Questions for the owner** go out with the run: license, missing positions, volume and size units,
+   review of the `ancestor` and `excluded` taxa, and which organization and people to credit.

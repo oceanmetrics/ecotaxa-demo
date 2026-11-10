@@ -10,6 +10,7 @@ project:
     - 02_taxa_worms.qmd
     - 03_publish_to-obis.qmd
     - 04_archive_to-ncei.qmd
+    - 05_migrate_from-ifremer.qmd
     - map_project-4.qmd
 
 website:
@@ -27,6 +28,8 @@ website:
         text: "03 OBIS"
       - href: 04_archive_to-ncei.qmd
         text: "04 NCEI"
+      - href: 05_migrate_from-ifremer.qmd
+        text: "05 Migrate"
       - href: map_project-4.qmd
         text: "Sample map"
     right:

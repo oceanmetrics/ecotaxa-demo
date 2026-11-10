@@ -9,3 +9,6 @@ node_modules/
 *_files/
 
 **/*.quarto_ipynb
+/_site_project-*/
+# people for `ecotaxa_admin.py users`: names and emails, never in git
+scripts/node/users_*.csv

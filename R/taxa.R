@@ -5,7 +5,7 @@
 # "other", ...) carries none. the TSV export carries the category name, id and lineage, not the
 # AphiaID, so each distinct category is resolved once through the node's taxonomy. the rules
 # below decide per category and the result is a CSV a taxonomist reviews
-# (metadata/taxa_lookup.csv). they differ from EcoTaxa's own wormsification in one place: a
+# (metadata/taxa_lookup_project-<id>.csv). they differ from EcoTaxa's own wormsification in one place: a
 # morphological category whose nearest living ancestor is only Biota is excluded here, where
 # EcoTaxa's DwC export publishes it as Biota. nothing is guessed silently: a category that
 # resolves to nothing is `unresolved`, and the OBIS notebook stops on it.
@@ -128,7 +128,22 @@ assert_taxa_resolved <- function(objects, lookup) {
   if (length(miss)) stop("categories used by the objects but absent from the lookup: ",
                          paste(miss, collapse = ", "), call. = FALSE)
   unres <- lookup$ecotaxa_name[lookup$ecotaxa_id %in% used & lookup$decision == "unresolved"]
-  if (length(unres)) stop("unresolved categories (review metadata/taxa_lookup.csv): ",
+  if (length(unres)) stop("unresolved categories (review metadata/taxa_lookup_project-<id>.csv): ",
                           paste(unres, collapse = ", "), call. = FALSE)
   invisible(TRUE)
+}
+
+# EcoTaxa's category id for each object, from the exported display name. a general export made
+# without internal ids carries object_annotation_category (the taxon's display_name, unique on a
+# node) but no object_annotation_category_id. taxa is the node's taxonomy for the project's used
+# categories (ecotaxa_taxa()). a name with no match, or with two, stops: never a guess.
+ecotaxa_category_ids <- function(display_name, taxa) {
+  stopifnot(all(c("ecotaxa_id", "display_name") %in% names(taxa)))
+  dup <- unique(taxa$display_name[duplicated(taxa$display_name)])
+  if (length(dup)) stop("display names shared by two categories: ", paste(dup, collapse = ", "), call. = FALSE)
+  id <- taxa$ecotaxa_id[match(display_name, taxa$display_name)]
+  miss <- unique(display_name[!is.na(display_name) & is.na(id)])
+  if (length(miss)) stop("exported categories not among the project's categories: ",
+                         paste(miss, collapse = ", "), call. = FALSE)
+  as.integer(id)
 }

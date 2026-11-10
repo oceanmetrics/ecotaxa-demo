@@ -30,3 +30,37 @@ test_that("parse_wormsification() recovers EcoTaxa's own mapping: phylo to itsel
   expect_equal(m$maps_to_name[m$ecotaxa_id == 85078], "Biota")      # egg<other lands on Biota
   expect_true(is.na(m$maps_to_id[m$ecotaxa_id == 84963]))             # detritus: no solution
 })
+test_that("ecotaxa_project_id() reads ECOTAXA_PROJECT_ID, defaults to 2 and refuses junk", {
+  withr::with_envvar(c(ECOTAXA_PROJECT_ID = NA), expect_equal(ecotaxa_project_id(), 2L))
+  withr::with_envvar(c(ECOTAXA_PROJECT_ID = "4"), expect_equal(ecotaxa_project_id(), 4L))
+  withr::with_envvar(c(ECOTAXA_PROJECT_ID = "four"), expect_error(ecotaxa_project_id(), "whole number"))
+})
+test_that("a token alone counts as a login and is returned without calling the node", {
+  withr::with_envvar(c(ECOTAXA_TOKEN = "abc.def.ghi", ECOTAXA_USER = NA, ECOTAXA_PASSWORD = NA), {
+    expect_true(ecotaxa_has_login())
+    expect_equal(ecotaxa_login(base = "http://127.0.0.1:9"), "abc.def.ghi")
+  })
+  withr::with_envvar(c(ECOTAXA_TOKEN = NA, ECOTAXA_USER = NA, ECOTAXA_PASSWORD = NA),
+                     expect_false(ecotaxa_has_login()))
+})
+test_that("ecotaxa_export_body() sends values the node's GeneralExportReq accepts (regression: split_by '' was a 422)", {
+  b <- ecotaxa_export_body(4)
+  expect_equal(b$request$split_by, "sample")
+  expect_true(b$request$split_by %in% c("sample", "acquisition", "taxon", "none"))
+  expect_equal(b$request$with_images, "first"); expect_identical(b$request$project_id, 4L)
+  expect_equal(as.character(jsonlite::toJSON(b$filters)), "{}")
+  expect_error(ecotaxa_export_body(4, split_by = ""))
+  expect_error(ecotaxa_export_body(4, with_images = "yes"))
+})
+test_that("ecotaxa_sample_batches() caps objects per batch, keeps order, and sends an oversized sample alone", {
+  b <- ecotaxa_sample_batches(c(11, 12, 13, 14, 15), c(10, 20, 15, 50, 5), max_objects = 30)
+  expect_equal(b, list(c(11, 12), 13, 14, 15))
+  expect_equal(unlist(b), c(11, 12, 13, 14, 15))
+  expect_equal(ecotaxa_sample_batches(1:3, c(1, 1, 1), 100), list(1:3))
+  expect_error(ecotaxa_sample_batches(1:2, c(1, NA)))
+})
+test_that("ecotaxa_export_body(samples =) fills the samples filter as comma-separated ids (no scientific notation)", {
+  b <- ecotaxa_export_body(4, samples = c(400000123, 400000124))
+  expect_equal(b$filters$samples, "400000123,400000124")
+  expect_equal(as.character(jsonlite::toJSON(ecotaxa_export_body(4)$filters)), "{}")
+})

@@ -44,3 +44,10 @@ test_that("assert_taxa_resolved() stops on a category missing from the lookup", 
   o <- fixture_objects(); o$object_annotation_category_id[1] <- 12345L
   expect_error(assert_taxa_resolved(o, lk), "absent from the lookup")
 })
+test_that("ecotaxa_category_ids() maps exported display names to ids and refuses a guess", {
+  taxa <- tibble::tibble(ecotaxa_id = c(45072L, 84963L), display_name = c("Cyclopoida", "detritus"))
+  expect_equal(ecotaxa_category_ids(c("detritus", "Cyclopoida", NA), taxa), c(84963L, 45072L, NA))
+  expect_error(ecotaxa_category_ids("Oncaeidae", taxa), "not among the project's categories: Oncaeidae")
+  taxa2 <- tibble::tibble(ecotaxa_id = 1:2, display_name = c("egg", "egg"))
+  expect_error(ecotaxa_category_ids("egg", taxa2), "shared by two categories")
+})

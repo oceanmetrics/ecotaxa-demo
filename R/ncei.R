@@ -16,14 +16,14 @@ ncei_package <- function(out_dir, dataset_key, version, tsv_paths, image_dir = N
   for (p in tsv_paths) file.copy(p, file.path(bag, "data/ecotaxa_export", basename(p)))
   n_img <- 0L
   if (!is.null(image_dir) && dir.exists(image_dir)) {
-    imgs <- list.files(image_dir, pattern = "\\.(jpg|jpeg|png|tif|tiff)$", recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
-    for (p in imgs) {
-      rel <- sub(paste0("^", normalizePath(image_dir), "/?"), "", normalizePath(p))
-      dest <- file.path(bag, "data/images", rel)
-      dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE)
-      file.copy(p, dest)
-    }
-    n_img <- length(imgs)
+    # vectorized: a project can hold a million images, so one dir.create per folder and one
+    # file.copy call, not one of each per image
+    rel  <- list.files(image_dir, pattern = "\\.(jpg|jpeg|png|tif|tiff)$", recursive = TRUE, ignore.case = TRUE)
+    dest <- file.path(bag, "data/images", rel)
+    for (d in unique(dirname(dest))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
+    ok <- file.copy(file.path(image_dir, rel), dest)
+    stopifnot("some images could not be copied into the bag" = all(ok))
+    n_img <- length(rel)
   }
   if (!is.null(dwca_zip) && file.exists(dwca_zip)) file.copy(dwca_zip, file.path(bag, "data/dwca", basename(dwca_zip)))
   if (!is.null(eml_path) && file.exists(eml_path)) file.copy(eml_path, file.path(bag, "data/metadata/eml.xml"))
@@ -56,12 +56,17 @@ ncei_verify <- function(bag) {
   want <- stats::setNames(vapply(parts, `[`, "", 1), vapply(parts, `[`, "", 2))
   have_files <- list.files(file.path(bag, "data"), recursive = TRUE)
   have <- stats::setNames(vapply(file.path(bag, "data", have_files), sha256_file, ""), paste0("data/", have_files))
-  f <- list()
-  add <- function(finding, path) f[[length(f) + 1]] <<- tibble::tibble(finding = finding, path = path)
-  for (p in setdiff(names(want), names(have))) add("missing_file", p)
-  for (p in setdiff(names(have), names(want))) add("unlisted_file", p)
-  for (p in intersect(names(want), names(have))) if (want[[p]] != have[[p]]) add("checksum_mismatch", p)
-  if (!file.exists(file.path(bag, "bagit.txt"))) add("missing_file", "bagit.txt")
-  if (!length(f)) return(tibble::tibble(finding = "ok", path = NA_character_))
-  dplyr::bind_rows(f)
+  # vectorized: a per-name lookup in a loop is quadratic and never finishes on a million files
+  # (regression: project 4's bag, 2026-11-10)
+  both <- intersect(names(want), names(have))
+  f <- tibble::tibble(
+    finding = c(rep("missing_file", length(setdiff(names(want), names(have)))),
+                rep("unlisted_file", length(setdiff(names(have), names(want)))),
+                rep("checksum_mismatch", sum(want[both] != have[both])),
+                if (!file.exists(file.path(bag, "bagit.txt"))) "missing_file"),
+    path = c(setdiff(names(want), names(have)), setdiff(names(have), names(want)),
+             both[want[both] != have[both]],
+             if (!file.exists(file.path(bag, "bagit.txt"))) "bagit.txt"))
+  if (!nrow(f)) return(tibble::tibble(finding = "ok", path = NA_character_))
+  f
 }

@@ -89,4 +89,16 @@ eml_check <- function(doc) {
   dplyr::bind_rows(f)
 }
 write_eml <- function(doc, path) { xml2::write_xml(doc, path); invisible(path) }
+
+# the hand-kept metadata for one project (metadata/projects.csv): title, abstract, license,
+# contact, organization, verification. one row per project; a project without a row stops here
+# rather than borrowing another project's words
+read_project_meta <- function(path, project_id) {
+  m <- readr::read_csv(path, show_col_types = FALSE,
+                       col_types = readr::cols(project_id = "i", .default = "c"))
+  r <- m[m$project_id == as.integer(project_id), ]
+  if (nrow(r) != 1) stop("metadata/projects.csv has ", nrow(r), " rows for project ", project_id,
+                         "; add exactly one", call. = FALSE)
+  as.list(r)
+}
 `%||%` <- function(a, b) if (is.null(a)) b else a

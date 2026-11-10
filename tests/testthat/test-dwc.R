@@ -78,3 +78,30 @@ test_that("dwc_archive() zips deterministically and writes a manifest", {
   m <- jsonlite::fromJSON(a1$manifest)
   expect_equal(m$counts$occurrence, 2L); expect_equal(m$archive, "p2_2026-11-06.zip")
 })
+test_that("dwc_emof() mean ESD pools every category of an occurrence and only its own event and status (regression: vectorized join)", {
+  o <- fixture_objects()
+  # a seventh object: validated Cyclopoida in s1/a1 again, so that occurrence averages two objects
+  o <- dplyr::bind_rows(o, o[1, ] |> dplyr::mutate(object_id = "o7", object_esd = 30))
+  ev <- dwc_event(o, "p2"); oc <- dwc_occurrence(o, ev, lk, "p2", include_predicted = TRUE)
+  em <- dwc_emof(o, ev, oc, reg, "p2")
+  esd <- em[em$measurementType == "mean equivalent spherical diameter", ]
+  expect_equal(esd$measurementValue[esd$occurrenceID == "p2:s1:a1:1101:validated"], "20")   # mean(10, 30)
+  # the predicted Cyclopoida in s1/a2 (esd 30) stays apart from the validated one
+  expect_equal(esd$measurementValue[esd$occurrenceID == "p2:s1:a2:1101:predicted"], "30")
+  expect_equal(nrow(esd), nrow(oc))
+})
+test_that("ecotaxa_datetime() reads the general export's YYYY-MM-DD and HH:MM:SS too (regression: project 4 export)", {
+  expect_equal(ecotaxa_datetime("2021-09-14", "13:05:00"), "2021-09-14T13:05:00Z")
+  expect_equal(ecotaxa_datetime("2021-09-14", NA), "2021-09-14")
+  expect_equal(ecotaxa_datetime("20210914", "130500"), "2021-09-14T13:05:00Z")
+})
+test_that("dwc_event() publishes a 0,0 sample without coordinates, but keeps a real 0 latitude (regression: project 4 ws21093_MR_64um)", {
+  o <- fixture_objects()
+  o$object_lat[o$sample_id == "s2"] <- 0; o$object_lon[o$sample_id == "s2"] <- 0
+  ev <- dwc_event(o, "p2")
+  s2 <- ev[ev$eventID == "p2:s2", ]
+  expect_true(is.na(s2$decimalLatitude)); expect_true(is.na(s2$decimalLongitude))
+  expect_false("null_island" %in% names(ev))
+  o$object_lon[o$sample_id == "s2"] <- -80
+  expect_equal(dwc_event(o, "p2")$decimalLatitude[dwc_event(o, "p2")$eventID == "p2:s2"], 0)
+})

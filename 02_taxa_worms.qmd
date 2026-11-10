@@ -9,7 +9,7 @@ flowchart LR
   C["categories used by the project<br/>(taxo_stats.used_taxa)"]:::node --> T["node taxonomy<br/>/api/taxon_set/query<br/>type P or M, aphia_id, lineage"]:::node
   T --> D["taxa_decide()<br/>aphia | name_match | ancestor | excluded"]:::core
   D --> W["taxa_worms_fill()<br/>worrms by AphiaID or exact name<br/>valid name, rank, lineage, LSID"]:::core
-  W --> L[("metadata/taxa_lookup.csv<br/>reviewed by a taxonomist")]:::store
+  W --> L[("metadata/taxa_lookup_project-<id>.csv<br/>reviewed by a taxonomist")]:::store
   L --> O["03 OBIS: assert_taxa_resolved()"]:::core
   classDef node  fill:#ffffff,stroke:#8a9bb0,color:#1f2d3d
   classDef core  fill:#e6f1ea,stroke:#4f8a66,color:#173322
@@ -42,8 +42,8 @@ same code runs against a canned WoRMS in the tests and against `worrms` here.
 #| label: setup
 librarian::shelf(worrms, dplyr, readr, tibble, here, quiet = TRUE)
 for (f in list.files(here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
-PROJECT_ID <- 2L
-LOOKUP_CSV <- here("metadata/taxa_lookup.csv")
+PROJECT_ID <- ecotaxa_project_id()
+LOOKUP_CSV <- here("metadata", paste0("taxa_lookup_project-", PROJECT_ID, ".csv"))
 ```
 
 ## The node's own taxonomy for the categories in use
@@ -56,6 +56,7 @@ taxa <- ecotaxa_taxa(used)
 anc  <- setdiff(as.integer(unlist(strsplit(taxa$id_lineage, ","))), taxa$ecotaxa_id)
 taxa <- bind_rows(taxa, ecotaxa_taxa(anc)) |> distinct(ecotaxa_id, .keep_all = TRUE)
 taxa |> filter(ecotaxa_id %in% used) |> select(ecotaxa_id, display_name, type, rank, aphia_id, lineage)
+cat(length(used), "categories in use on project", PROJECT_ID, "\n")
 ```
 
 ## Decide, then fill from WoRMS
@@ -83,15 +84,37 @@ lookup |>
     TRUE                                             ~ "no"))
 ```
 
-The one disagreement is deliberate: EcoTaxa's rule sends a morphological category to its nearest
-phylogenetic ancestor whatever that is, so `egg<other` becomes an occurrence of Biota; this pipeline
-excludes it, because an occurrence of "life" tells OBIS nothing.
+Disagreements are deliberate where EcoTaxa's rule sends a morphological category to its nearest
+phylogenetic ancestor whatever that is, so a category such as `egg<other` becomes an occurrence of Biota;
+this pipeline excludes it, because an occurrence of "life" tells OBIS nothing. Any other `no` is a
+finding for the taxonomist reviewing the lookup.
+
+```{r}
+#| label: disagree
+lookup |>
+  select(ecotaxa_id, ecotaxa_name, decision, aphia_id) |>
+  left_join(own, by = "ecotaxa_id") |>
+  filter(!(decision == "excluded" & is.na(maps_to_aphia_id)), is.na(aphia_id) | is.na(maps_to_aphia_id) | aphia_id != maps_to_aphia_id) |>
+  count(decision, maps_to_name, sort = TRUE)
+```
 
 ```{r}
 #| label: summary
 lookup |> count(decision)
 ```
 
-`metadata/taxa_lookup.csv` is committed: it is the artifact a taxonomist reviews and the one notebook 03 reads.
+`metadata/taxa_lookup_project-<id>.csv` is committed: it is the artifact a taxonomist reviews and the one notebook 03 reads.
 An `unresolved` row stops notebook 03 until someone edits the CSV (set `decision` and `aphia_id` by hand) or
 fixes the category on the node.
+
+## Lessons learned (project 4, 2026-11-10)
+
+- 73 categories in use: 48 resolve directly to an AphiaID, 10 to their nearest WoRMS ancestor, 15 are excluded,
+  none unresolved. The `ancestor` rows are the ones a taxonomist should read first (for project 4,
+  `tintinnida` to Tintinnidae, `centric` to Bacillariophyta, `ciliate-tintinnids` to Ciliophora).
+- Exclusions decide most of what reaches OBIS: of 15,788 validated objects, 11,927 sit in excluded categories
+  (`rods<other` 4,082, `artefact` 3,043, `ghost`, `dubious`, `detritus`, `unidentified cells`), so only 3,861
+  become occurrences. A morphological category like `rods<other` is a question for the data owner, not a rule
+  to change silently.
+- Keep one lookup per project (`metadata/taxa_lookup_project-<id>.csv`): the same category can be reviewed
+  differently for two instruments.
