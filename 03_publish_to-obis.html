@@ -155,6 +155,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">04 NCEI</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./05_migrate_from-ifremer.html"> 
+<span class="menu-text">05 Migrate</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./map_project-4.html"> 
 <span class="menu-text">Sample map</span></a>
   </li>  
@@ -192,6 +196,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#eml" id="toc-eml" class="nav-link" data-scroll-target="#eml">EML</a></li>
   <li><a href="#the-archive" id="toc-the-archive" class="nav-link" data-scroll-target="#the-archive">The archive</a></li>
   <li><a href="#next-by-a-person" id="toc-next-by-a-person" class="nav-link" data-scroll-target="#next-by-a-person">Next, by a person</a></li>
+  <li><a href="#lessons-learned-project-4-2026-11-10" id="toc-lessons-learned-project-4-2026-11-10" class="nav-link" data-scroll-target="#lessons-learned-project-4-2026-11-10">Lessons learned (project 4, 2026-11-10)</a></li>
   </ul>
 </nav>
     </div>
@@ -260,16 +265,17 @@ flowchart LR
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(dplyr, readr, tibble, arrow, jsonlite, xml2, digest, obistools, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_id</span>()</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>DATASET_KEY <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"ecotaxa-om-prj"</span>, PROJECT_ID)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>VERSION     <span class="ot">&lt;-</span> <span class="fu">format</span>(<span class="fu">Sys.Date</span>())</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT  <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>DIR_DWCA    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/darwincore"</span>, DATASET_KEY)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>objects <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"objects.parquet"</span>))</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>lookup  <span class="ot">&lt;-</span> <span class="fu">read_taxa_lookup</span>(<span class="fu">here</span>(<span class="st">"metadata/taxa_lookup.csv"</span>))</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>reg     <span class="ot">&lt;-</span> <span class="fu">read_measurement_registry</span>(<span class="fu">here</span>(<span class="st">"metadata/measurement_type.csv"</span>))</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>project <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>() <span class="sc">|&gt;</span> <span class="fu">filter</span>(projid <span class="sc">==</span> PROJECT_ID)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>project <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>lookup  <span class="ot">&lt;-</span> <span class="fu">read_taxa_lookup</span>(<span class="fu">here</span>(<span class="st">"metadata"</span>, <span class="fu">paste0</span>(<span class="st">"taxa_lookup_project-"</span>, PROJECT_ID, <span class="st">".csv"</span>)))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>meta    <span class="ot">&lt;-</span> <span class="fu">read_project_meta</span>(<span class="fu">here</span>(<span class="st">"metadata/projects.csv"</span>), PROJECT_ID)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>reg     <span class="ot">&lt;-</span> <span class="fu">read_measurement_registry</span>(<span class="fu">here</span>(<span class="st">"metadata/measurement_type.csv"</span>))</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>project <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>() <span class="sc">|&gt;</span> <span class="fu">filter</span>(projid <span class="sc">==</span> PROJECT_ID)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>project <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -348,7 +354,16 @@ flowchart LR
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>event      <span class="ot">&lt;-</span> <span class="fu">dwc_event</span>(objects, DATASET_KEY)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>occurrence <span class="ot">&lt;-</span> <span class="fu">dwc_occurrence</span>(objects, event, lookup, DATASET_KEY, <span class="at">include_predicted =</span> INCLUDE_PREDICTED)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>emof       <span class="ot">&lt;-</span> <span class="fu">dwc_emof</span>(objects, event, occurrence, reg, DATASET_KEY, <span class="at">instrument_url =</span> project<span class="sc">$</span>instrument_url)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>event</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="at">event =</span> <span class="fu">nrow</span>(event), <span class="at">occurrence =</span> <span class="fu">nrow</span>(occurrence), <span class="at">emof =</span> <span class="fu">nrow</span>(emof))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>     event occurrence       emof 
+         2          2          4 </code></pre>
+</div>
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the first rows of each (all of them for a small project)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(event, <span class="dv">15</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -414,8 +429,8 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>occurrence <span class="sc">|&gt;</span> <span class="fu">select</span>(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                     identificationVerificationStatus, identificationRemarks)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>occurrence <span class="sc">|&gt;</span> <span class="fu">select</span>(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                     identificationVerificationStatus, identificationRemarks) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">15</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -469,7 +484,7 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>emof <span class="sc">|&gt;</span> <span class="fu">select</span>(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>emof <span class="sc">|&gt;</span> <span class="fu">select</span>(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">15</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -541,6 +556,41 @@ flowchart LR
 </table>
 </div>
 </div>
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the most frequent taxa by objects</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>occurrence <span class="sc">|&gt;</span> <span class="fu">group_by</span>(scientificName, taxonRank) <span class="sc">|&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">events =</span> <span class="fu">n_distinct</span>(eventID), <span class="at">objects =</span> <span class="fu">sum</span>(organismQuantity), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(objects)) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">scientificName</th>
+<th style="text-align: left;">taxonRank</th>
+<th style="text-align: right;">events</th>
+<th style="text-align: right;">objects</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Oncaeidae</td>
+<td style="text-align: left;">Family</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cyclopoida</td>
+<td style="text-align: left;">Order</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 </section>
 <section id="checks" class="level2">
@@ -548,8 +598,8 @@ flowchart LR
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>findings <span class="ot">&lt;-</span> <span class="fu">dwc_check</span>(event, occurrence, emof)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>findings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>findings <span class="ot">&lt;-</span> <span class="fu">dwc_check</span>(event, occurrence, emof)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>findings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -587,9 +637,9 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_dwc</span>(findings)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># obistools on the same tables: required fields and event ids</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_fields</span>(occurrence) <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_dwc</span>(findings)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># obistools on the same tables: required fields and event ids</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_fields</span>(occurrence) <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -633,7 +683,7 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_eventids</span>(event)   <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_eventids</span>(event)   <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -647,14 +697,11 @@ flowchart LR
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>eml <span class="ot">&lt;-</span> <span class="fu">build_eml</span>(<span class="fu">as.list</span>(project), event, occurrence, <span class="at">meta =</span> <span class="fu">list</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">abstract =</span> <span class="fu">paste</span>(<span class="st">"Demonstration export of EcoTaxa project"</span>, PROJECT_ID, <span class="st">"("</span>, project<span class="sc">$</span>title, <span class="st">") on the"</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"Ocean Metrics demo node, resolved to WoRMS and aggregated per sample and taxon."</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"Eight test objects from the upstream EcoTaxa test set; classifier predictions only."</span>),</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">license =</span> <span class="st">"CC BY 4.0 (demo; the project's own license applies in production)"</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_name =</span> <span class="st">"Ben Best"</span>, <span class="at">contact_email =</span> <span class="st">"ben@oceanmetrics.io"</span>, <span class="at">organization =</span> <span class="st">"Ocean Metrics"</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">instrument =</span> project<span class="sc">$</span>instrument))</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">eml_check</span>(eml)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># every text comes from metadata/projects.csv (one row per project), never from another project's row</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>eml <span class="ot">&lt;-</span> <span class="fu">build_eml</span>(<span class="fu">as.list</span>(project), event, occurrence, <span class="at">meta =</span> <span class="fu">c</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  meta[<span class="fu">c</span>(<span class="st">"abstract"</span>, <span class="st">"license"</span>, <span class="st">"contact_name"</span>, <span class="st">"contact_email"</span>, <span class="st">"organization"</span>)],</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">instrument =</span> project<span class="sc">$</span>instrument)))</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">eml_check</span>(eml)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -713,9 +760,9 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(<span class="fu">eml_check</span>(eml)<span class="sc">$</span>level <span class="sc">==</span> <span class="st">"error"</span>))</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_DWCA, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>eml_path <span class="ot">&lt;-</span> <span class="fu">write_eml</span>(eml, <span class="fu">file.path</span>(DIR_DWCA, <span class="st">"eml.xml"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(<span class="fu">eml_check</span>(eml)<span class="sc">$</span>level <span class="sc">==</span> <span class="st">"error"</span>))</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_DWCA, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>eml_path <span class="ot">&lt;-</span> <span class="fu">write_eml</span>(eml, <span class="fu">file.path</span>(DIR_DWCA, <span class="st">"eml.xml"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -724,14 +771,14 @@ flowchart LR
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">dwc_archive</span>(<span class="fu">file.path</span>(DIR_DWCA, <span class="st">"build"</span>), event, occurrence, emof, <span class="at">eml_path =</span> eml_path,</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dataset_key =</span> DATASET_KEY, <span class="at">version =</span> VERSION)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(a)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">dwc_archive</span>(<span class="fu">file.path</span>(DIR_DWCA, <span class="st">"build"</span>), event, occurrence, emof, <span class="at">eml_path =</span> eml_path,</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dataset_key =</span> DATASET_KEY, <span class="at">version =</span> VERSION)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(a)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 4
- $ zip         : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/darwincore/ecotaxa-om-prj2/ecotaxa-om-prj2_2026-11-09.zip"
- $ manifest    : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/darwincore/ecotaxa-om-prj2/ecotaxa-om-prj2_2026-11-09_manifest.json"
+ $ zip         : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/darwincore/ecotaxa-om-prj2/ecotaxa-om-prj2_2026-11-10.zip"
+ $ manifest    : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/darwincore/ecotaxa-om-prj2/ecotaxa-om-prj2_2026-11-10_manifest.json"
  $ content_hash: chr "75ddff35a24e06464cea2b24acc79d7af1fa1f6fbf47bb3249e27bc3911f769b"
  $ counts      :List of 3
   ..$ event     : int 2
@@ -740,7 +787,7 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>utils<span class="sc">::</span><span class="fu">unzip</span>(a<span class="sc">$</span>zip, <span class="at">list =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>utils<span class="sc">::</span><span class="fu">unzip</span>(a<span class="sc">$</span>zip, <span class="at">list =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -756,27 +803,27 @@ flowchart LR
 <tr class="odd">
 <td style="text-align: left;">event.csv</td>
 <td style="text-align: right;">441</td>
-<td style="text-align: left;">2026-11-09 01:00:00</td>
+<td style="text-align: left;">2026-11-10 01:00:00</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">occurrence.csv</td>
 <td style="text-align: right;">997</td>
-<td style="text-align: left;">2026-11-09 01:00:00</td>
+<td style="text-align: left;">2026-11-10 01:00:00</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">extendedMeasurementOrFact.csv</td>
 <td style="text-align: right;">1003</td>
-<td style="text-align: left;">2026-11-09 01:00:00</td>
+<td style="text-align: left;">2026-11-10 01:00:00</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">meta.xml</td>
 <td style="text-align: right;">3842</td>
-<td style="text-align: left;">2026-11-09 01:00:00</td>
+<td style="text-align: left;">2026-11-10 01:00:00</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">eml.xml</td>
-<td style="text-align: right;">3154</td>
-<td style="text-align: left;">2026-11-09 01:00:00</td>
+<td style="text-align: right;">3152</td>
+<td style="text-align: left;">2026-11-10 01:00:00</td>
 </tr>
 </tbody>
 </table>
@@ -784,21 +831,21 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(a<span class="sc">$</span>manifest), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(a<span class="sc">$</span>manifest), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>{
   "dataset_key": "ecotaxa-om-prj2",
-  "version": "2026-11-09",
+  "version": "2026-11-10",
   "content_hash": "75ddff35a24e06464cea2b24acc79d7af1fa1f6fbf47bb3249e27bc3911f769b",
-  "archive": "ecotaxa-om-prj2_2026-11-09.zip",
-  "archive_sha256": "f11b2096a64e06a8bac0978edc03326e0610ad84a8dd03f28bb6e2d2054f1eb2",
+  "archive": "ecotaxa-om-prj2_2026-11-10.zip",
+  "archive_sha256": "0f9bfb87e82b14c874f36d1365b420dde5aca1b982345035d56a9a2884227cbb",
   "counts": {
     "event": 2,
     "occurrence": 2,
     "emof": 4
   },
-  "generated_utc": "2026-11-09T19:43:28Z"
+  "generated_utc": "2026-11-10T14:20:12Z"
 }</code></pre>
 </div>
 </div>
@@ -806,10 +853,20 @@ flowchart LR
 <section id="next-by-a-person" class="level2">
 <h2 class="anchored" data-anchor-id="next-by-a-person">Next, by a person</h2>
 <ol type="1">
-<li>Review <code>metadata/taxa_lookup.csv</code> and the <code>predicted_included</code> finding above.</li>
-<li>Upload ecotaxa-om-prj2_2026-11-09.zip to the OBIS-USA IPT as a new resource (or a new version of one) and record the IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF through OBIS-USA.</li>
+<li>Review <code>metadata/taxa_lookup_project-&lt;id&gt;.csv</code> and the <code>predicted_included</code> finding above.</li>
+<li>Upload ecotaxa-om-prj2_2026-11-10.zip to the OBIS-USA IPT as a new resource (or a new version of one) and record the IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF through OBIS-USA.</li>
 <li>Compare with EcoTaxa’s own <code>collections/export/darwin_core</code> output for the same project as a cross-check.</li>
 </ol>
+</section>
+<section id="lessons-learned-project-4-2026-11-10" class="level2">
+<h2 class="anchored" data-anchor-id="lessons-learned-project-4-2026-11-10">Lessons learned (project 4, 2026-11-10)</h2>
+<ul>
+<li><strong>Positions of 0,0</strong> are the usual placeholder for “unknown” (project 4’s <code>ws21093_MR_64um</code>): <code>dwc_event()</code> now publishes them as no coordinates, the same rule as the <a href="./map_project-4.html">sample map</a>. A latitude or a longitude of 0 alone is kept.</li>
+<li><strong>Validated only</strong> by default: <code>INCLUDE_PREDICTED</code> turns on only when a project has no validated object (the demo); project 4’s 951,833 predictions stay out.</li>
+<li><strong>Column names differ by instrument.</strong> The eMoF reads <code>sample_tot_vol</code> (Zooscan) and <code>object_esd</code>; a PlanktoScope export has <code>sample_total_volume</code>, <code>sample_concentrated_sample_volume</code>, <code>sample_dilution_factor</code> and <code>object_equivalent_diameter</code> (pixels, with <code>process_pixel</code>). Volume, concentration and size are therefore absent for project 4 until the owner confirms units and meaning; the mapping belongs in <code>metadata/</code>, not guessed in code.</li>
+<li><strong>Child events have no coordinates</strong>: occurrences on acquisition events (738 for project 4) carry the <code>no_coordinates</code> warning; OBIS is expected to take them from the parent sample event, to confirm.</li>
+<li><strong>Metadata per project</strong> comes from <code>metadata/projects.csv</code>; a project without a row stops the build rather than borrowing the demo’s text or license.</li>
+</ul>
 
 
 <!-- -->
@@ -1268,114 +1325,135 @@ flowchart LR
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "03 Build and validate the Darwin Core Archive for OBIS"</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Event core, Occurrence, eMoF, EML, meta.xml, zip, checks. No upload."</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>%%| file: diagrams/obis.mmd</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## What this does</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>From the cached export (01) and the reviewed lookup (02): one **Event** per sample (a child event per</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>acquisition when a sample has several), **Occurrence** rows for validated objects aggregated per event and</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>taxon, an **extended MeasurementOrFact** with the instrument (NERC L22 URI from the node), the sample volume,</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>the object count, the concentration where a volume exists and the mean equivalent spherical diameter as</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>exported, then **EML**, **meta.xml**, a deterministic **DwC-A zip** with a manifest, and the checks.</span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>The upload to the OBIS-USA IPT stays a deliberate manual act by the data owner. Nothing here talks to a portal.</span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(dplyr, readr, tibble, arrow, jsonlite, xml2, digest, obistools, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>DATASET_KEY <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"ecotaxa-om-prj"</span>, PROJECT_ID)</span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>VERSION     <span class="ot">&lt;-</span> <span class="fu">format</span>(<span class="fu">Sys.Date</span>())</span>
-<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT  <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
-<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>DIR_DWCA    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/darwincore"</span>, DATASET_KEY)</span>
-<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>objects <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"objects.parquet"</span>))</span>
-<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>lookup  <span class="ot">&lt;-</span> <span class="fu">read_taxa_lookup</span>(<span class="fu">here</span>(<span class="st">"metadata/taxa_lookup.csv"</span>))</span>
-<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>reg     <span class="ot">&lt;-</span> <span class="fu">read_measurement_registry</span>(<span class="fu">here</span>(<span class="st">"metadata/measurement_type.csv"</span>))</span>
-<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>project <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>() <span class="sc">|&gt;</span> <span class="fu">filter</span>(projid <span class="sc">==</span> PROJECT_ID)</span>
-<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>project <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url)</span>
-<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a><span class="fu">## The gate on taxa, and the honest switch</span></span>
-<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: gate</span></span>
-<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_taxa_resolved</span>(objects, lookup)</span>
-<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span> <span class="fu">count</span>(object_annotation_status)</span>
-<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a><span class="co"># the demo project has no validated object: everything is the classifier's prediction. a real publication</span></span>
-<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a><span class="co"># keeps the default (validated only); the demo opts in so the archive is not empty, and every occurrence</span></span>
-<span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a><span class="co"># says identificationVerificationStatus = predicted</span></span>
-<span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a>INCLUDE_PREDICTED <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">tolower</span>(objects<span class="sc">$</span>object_annotation_status) <span class="sc">==</span> <span class="st">"validated"</span>)</span>
-<span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>INCLUDE_PREDICTED</span>
-<span id="cb18-53"><a href="#cb18-53" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb18-54"><a href="#cb18-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-55"><a href="#cb18-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Event, Occurrence, eMoF</span></span>
-<span id="cb18-56"><a href="#cb18-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-59"><a href="#cb18-59" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb18-60"><a href="#cb18-60" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tables</span></span>
-<span id="cb18-61"><a href="#cb18-61" aria-hidden="true" tabindex="-1"></a>event      <span class="ot">&lt;-</span> <span class="fu">dwc_event</span>(objects, DATASET_KEY)</span>
-<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a>occurrence <span class="ot">&lt;-</span> <span class="fu">dwc_occurrence</span>(objects, event, lookup, DATASET_KEY, <span class="at">include_predicted =</span> INCLUDE_PREDICTED)</span>
-<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a>emof       <span class="ot">&lt;-</span> <span class="fu">dwc_emof</span>(objects, event, occurrence, reg, DATASET_KEY, <span class="at">instrument_url =</span> project<span class="sc">$</span>instrument_url)</span>
-<span id="cb18-64"><a href="#cb18-64" aria-hidden="true" tabindex="-1"></a>event</span>
-<span id="cb18-65"><a href="#cb18-65" aria-hidden="true" tabindex="-1"></a>occurrence <span class="sc">|&gt;</span> <span class="fu">select</span>(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,</span>
-<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a>                     identificationVerificationStatus, identificationRemarks)</span>
-<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>emof <span class="sc">|&gt;</span> <span class="fu">select</span>(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID)</span>
-<span id="cb18-68"><a href="#cb18-68" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb18-69"><a href="#cb18-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-70"><a href="#cb18-70" aria-hidden="true" tabindex="-1"></a><span class="fu">## Checks</span></span>
-<span id="cb18-71"><a href="#cb18-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-74"><a href="#cb18-74" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb18-75"><a href="#cb18-75" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: checks</span></span>
-<span id="cb18-76"><a href="#cb18-76" aria-hidden="true" tabindex="-1"></a>findings <span class="ot">&lt;-</span> <span class="fu">dwc_check</span>(event, occurrence, emof)</span>
-<span id="cb18-77"><a href="#cb18-77" aria-hidden="true" tabindex="-1"></a>findings</span>
-<span id="cb18-78"><a href="#cb18-78" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_dwc</span>(findings)</span>
-<span id="cb18-79"><a href="#cb18-79" aria-hidden="true" tabindex="-1"></a><span class="co"># obistools on the same tables: required fields and event ids</span></span>
-<span id="cb18-80"><a href="#cb18-80" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_fields</span>(occurrence) <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span>
-<span id="cb18-81"><a href="#cb18-81" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_eventids</span>(event)   <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span>
-<span id="cb18-82"><a href="#cb18-82" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb18-83"><a href="#cb18-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-84"><a href="#cb18-84" aria-hidden="true" tabindex="-1"></a><span class="fu">## EML</span></span>
-<span id="cb18-85"><a href="#cb18-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-88"><a href="#cb18-88" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb18-89"><a href="#cb18-89" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: eml</span></span>
-<span id="cb18-90"><a href="#cb18-90" aria-hidden="true" tabindex="-1"></a>eml <span class="ot">&lt;-</span> <span class="fu">build_eml</span>(<span class="fu">as.list</span>(project), event, occurrence, <span class="at">meta =</span> <span class="fu">list</span>(</span>
-<span id="cb18-91"><a href="#cb18-91" aria-hidden="true" tabindex="-1"></a>  <span class="at">abstract =</span> <span class="fu">paste</span>(<span class="st">"Demonstration export of EcoTaxa project"</span>, PROJECT_ID, <span class="st">"("</span>, project<span class="sc">$</span>title, <span class="st">") on the"</span>,</span>
-<span id="cb18-92"><a href="#cb18-92" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"Ocean Metrics demo node, resolved to WoRMS and aggregated per sample and taxon."</span>,</span>
-<span id="cb18-93"><a href="#cb18-93" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"Eight test objects from the upstream EcoTaxa test set; classifier predictions only."</span>),</span>
-<span id="cb18-94"><a href="#cb18-94" aria-hidden="true" tabindex="-1"></a>  <span class="at">license =</span> <span class="st">"CC BY 4.0 (demo; the project's own license applies in production)"</span>,</span>
-<span id="cb18-95"><a href="#cb18-95" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_name =</span> <span class="st">"Ben Best"</span>, <span class="at">contact_email =</span> <span class="st">"ben@oceanmetrics.io"</span>, <span class="at">organization =</span> <span class="st">"Ocean Metrics"</span>,</span>
-<span id="cb18-96"><a href="#cb18-96" aria-hidden="true" tabindex="-1"></a>  <span class="at">instrument =</span> project<span class="sc">$</span>instrument))</span>
-<span id="cb18-97"><a href="#cb18-97" aria-hidden="true" tabindex="-1"></a><span class="fu">eml_check</span>(eml)</span>
-<span id="cb18-98"><a href="#cb18-98" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(<span class="fu">eml_check</span>(eml)<span class="sc">$</span>level <span class="sc">==</span> <span class="st">"error"</span>))</span>
-<span id="cb18-99"><a href="#cb18-99" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_DWCA, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb18-100"><a href="#cb18-100" aria-hidden="true" tabindex="-1"></a>eml_path <span class="ot">&lt;-</span> <span class="fu">write_eml</span>(eml, <span class="fu">file.path</span>(DIR_DWCA, <span class="st">"eml.xml"</span>))</span>
-<span id="cb18-101"><a href="#cb18-101" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb18-102"><a href="#cb18-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-103"><a href="#cb18-103" aria-hidden="true" tabindex="-1"></a><span class="fu">## The archive</span></span>
-<span id="cb18-104"><a href="#cb18-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-107"><a href="#cb18-107" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb18-108"><a href="#cb18-108" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: archive</span></span>
-<span id="cb18-109"><a href="#cb18-109" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">dwc_archive</span>(<span class="fu">file.path</span>(DIR_DWCA, <span class="st">"build"</span>), event, occurrence, emof, <span class="at">eml_path =</span> eml_path,</span>
-<span id="cb18-110"><a href="#cb18-110" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dataset_key =</span> DATASET_KEY, <span class="at">version =</span> VERSION)</span>
-<span id="cb18-111"><a href="#cb18-111" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(a)</span>
-<span id="cb18-112"><a href="#cb18-112" aria-hidden="true" tabindex="-1"></a>utils<span class="sc">::</span><span class="fu">unzip</span>(a<span class="sc">$</span>zip, <span class="at">list =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb18-113"><a href="#cb18-113" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(a<span class="sc">$</span>manifest), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb18-114"><a href="#cb18-114" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb18-115"><a href="#cb18-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-116"><a href="#cb18-116" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next, by a person</span></span>
-<span id="cb18-117"><a href="#cb18-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-118"><a href="#cb18-118" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Review <span class="in">`metadata/taxa_lookup.csv`</span> and the <span class="in">`predicted_included`</span> finding above.</span>
-<span id="cb18-119"><a href="#cb18-119" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Upload <span class="in">`r basename(a$zip)`</span> to the OBIS-USA IPT as a new resource (or a new version of one) and record the</span>
-<span id="cb18-120"><a href="#cb18-120" aria-hidden="true" tabindex="-1"></a>   IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF</span>
-<span id="cb18-121"><a href="#cb18-121" aria-hidden="true" tabindex="-1"></a>   through OBIS-USA.</span>
-<span id="cb18-122"><a href="#cb18-122" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Compare with EcoTaxa's own <span class="in">`collections/export/darwin_core`</span> output for the same project as a cross-check.</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "03 Build and validate the Darwin Core Archive for OBIS"</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Event core, Occurrence, eMoF, EML, meta.xml, zip, checks. No upload."</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>%%| file: diagrams/obis.mmd</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## What this does</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>From the cached export (01) and the reviewed lookup (02): one **Event** per sample (a child event per</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>acquisition when a sample has several), **Occurrence** rows for validated objects aggregated per event and</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>taxon, an **extended MeasurementOrFact** with the instrument (NERC L22 URI from the node), the sample volume,</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>the object count, the concentration where a volume exists and the mean equivalent spherical diameter as</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>exported, then **EML**, **meta.xml**, a deterministic **DwC-A zip** with a manifest, and the checks.</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>The upload to the OBIS-USA IPT stays a deliberate manual act by the data owner. Nothing here talks to a portal.</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(dplyr, readr, tibble, arrow, jsonlite, xml2, digest, obistools, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_id</span>()</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>DATASET_KEY <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"ecotaxa-om-prj"</span>, PROJECT_ID)</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>VERSION     <span class="ot">&lt;-</span> <span class="fu">format</span>(<span class="fu">Sys.Date</span>())</span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT  <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>DIR_DWCA    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/darwincore"</span>, DATASET_KEY)</span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>objects <span class="ot">&lt;-</span> <span class="fu">read_parquet</span>(<span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"objects.parquet"</span>))</span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a>lookup  <span class="ot">&lt;-</span> <span class="fu">read_taxa_lookup</span>(<span class="fu">here</span>(<span class="st">"metadata"</span>, <span class="fu">paste0</span>(<span class="st">"taxa_lookup_project-"</span>, PROJECT_ID, <span class="st">".csv"</span>)))</span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>meta    <span class="ot">&lt;-</span> <span class="fu">read_project_meta</span>(<span class="fu">here</span>(<span class="st">"metadata/projects.csv"</span>), PROJECT_ID)</span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>reg     <span class="ot">&lt;-</span> <span class="fu">read_measurement_registry</span>(<span class="fu">here</span>(<span class="st">"metadata/measurement_type.csv"</span>))</span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>project <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>() <span class="sc">|&gt;</span> <span class="fu">filter</span>(projid <span class="sc">==</span> PROJECT_ID)</span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>project <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url)</span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## The gate on taxa, and the honest switch</span></span>
+<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: gate</span></span>
+<span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_taxa_resolved</span>(objects, lookup)</span>
+<span id="cb21-48"><a href="#cb21-48" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span> <span class="fu">count</span>(object_annotation_status)</span>
+<span id="cb21-49"><a href="#cb21-49" aria-hidden="true" tabindex="-1"></a><span class="co"># the demo project has no validated object: everything is the classifier's prediction. a real publication</span></span>
+<span id="cb21-50"><a href="#cb21-50" aria-hidden="true" tabindex="-1"></a><span class="co"># keeps the default (validated only); the demo opts in so the archive is not empty, and every occurrence</span></span>
+<span id="cb21-51"><a href="#cb21-51" aria-hidden="true" tabindex="-1"></a><span class="co"># says identificationVerificationStatus = predicted</span></span>
+<span id="cb21-52"><a href="#cb21-52" aria-hidden="true" tabindex="-1"></a>INCLUDE_PREDICTED <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">tolower</span>(objects<span class="sc">$</span>object_annotation_status) <span class="sc">==</span> <span class="st">"validated"</span>)</span>
+<span id="cb21-53"><a href="#cb21-53" aria-hidden="true" tabindex="-1"></a>INCLUDE_PREDICTED</span>
+<span id="cb21-54"><a href="#cb21-54" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-55"><a href="#cb21-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-56"><a href="#cb21-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## Event, Occurrence, eMoF</span></span>
+<span id="cb21-57"><a href="#cb21-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-60"><a href="#cb21-60" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-61"><a href="#cb21-61" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tables</span></span>
+<span id="cb21-62"><a href="#cb21-62" aria-hidden="true" tabindex="-1"></a>event      <span class="ot">&lt;-</span> <span class="fu">dwc_event</span>(objects, DATASET_KEY)</span>
+<span id="cb21-63"><a href="#cb21-63" aria-hidden="true" tabindex="-1"></a>occurrence <span class="ot">&lt;-</span> <span class="fu">dwc_occurrence</span>(objects, event, lookup, DATASET_KEY, <span class="at">include_predicted =</span> INCLUDE_PREDICTED)</span>
+<span id="cb21-64"><a href="#cb21-64" aria-hidden="true" tabindex="-1"></a>emof       <span class="ot">&lt;-</span> <span class="fu">dwc_emof</span>(objects, event, occurrence, reg, DATASET_KEY, <span class="at">instrument_url =</span> project<span class="sc">$</span>instrument_url)</span>
+<span id="cb21-65"><a href="#cb21-65" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="at">event =</span> <span class="fu">nrow</span>(event), <span class="at">occurrence =</span> <span class="fu">nrow</span>(occurrence), <span class="at">emof =</span> <span class="fu">nrow</span>(emof))</span>
+<span id="cb21-66"><a href="#cb21-66" aria-hidden="true" tabindex="-1"></a><span class="co"># the first rows of each (all of them for a small project)</span></span>
+<span id="cb21-67"><a href="#cb21-67" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(event, <span class="dv">15</span>)</span>
+<span id="cb21-68"><a href="#cb21-68" aria-hidden="true" tabindex="-1"></a>occurrence <span class="sc">|&gt;</span> <span class="fu">select</span>(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,</span>
+<span id="cb21-69"><a href="#cb21-69" aria-hidden="true" tabindex="-1"></a>                     identificationVerificationStatus, identificationRemarks) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">15</span>)</span>
+<span id="cb21-70"><a href="#cb21-70" aria-hidden="true" tabindex="-1"></a>emof <span class="sc">|&gt;</span> <span class="fu">select</span>(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">15</span>)</span>
+<span id="cb21-71"><a href="#cb21-71" aria-hidden="true" tabindex="-1"></a><span class="co"># the most frequent taxa by objects</span></span>
+<span id="cb21-72"><a href="#cb21-72" aria-hidden="true" tabindex="-1"></a>occurrence <span class="sc">|&gt;</span> <span class="fu">group_by</span>(scientificName, taxonRank) <span class="sc">|&gt;</span></span>
+<span id="cb21-73"><a href="#cb21-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">events =</span> <span class="fu">n_distinct</span>(eventID), <span class="at">objects =</span> <span class="fu">sum</span>(organismQuantity), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb21-74"><a href="#cb21-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(objects)) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">20</span>)</span>
+<span id="cb21-75"><a href="#cb21-75" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-76"><a href="#cb21-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-77"><a href="#cb21-77" aria-hidden="true" tabindex="-1"></a><span class="fu">## Checks</span></span>
+<span id="cb21-78"><a href="#cb21-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-81"><a href="#cb21-81" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-82"><a href="#cb21-82" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: checks</span></span>
+<span id="cb21-83"><a href="#cb21-83" aria-hidden="true" tabindex="-1"></a>findings <span class="ot">&lt;-</span> <span class="fu">dwc_check</span>(event, occurrence, emof)</span>
+<span id="cb21-84"><a href="#cb21-84" aria-hidden="true" tabindex="-1"></a>findings</span>
+<span id="cb21-85"><a href="#cb21-85" aria-hidden="true" tabindex="-1"></a><span class="fu">assert_dwc</span>(findings)</span>
+<span id="cb21-86"><a href="#cb21-86" aria-hidden="true" tabindex="-1"></a><span class="co"># obistools on the same tables: required fields and event ids</span></span>
+<span id="cb21-87"><a href="#cb21-87" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_fields</span>(occurrence) <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb21-88"><a href="#cb21-88" aria-hidden="true" tabindex="-1"></a>obistools<span class="sc">::</span><span class="fu">check_eventids</span>(event)   <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb21-89"><a href="#cb21-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-90"><a href="#cb21-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-91"><a href="#cb21-91" aria-hidden="true" tabindex="-1"></a><span class="fu">## EML</span></span>
+<span id="cb21-92"><a href="#cb21-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-95"><a href="#cb21-95" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-96"><a href="#cb21-96" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: eml</span></span>
+<span id="cb21-97"><a href="#cb21-97" aria-hidden="true" tabindex="-1"></a><span class="co"># every text comes from metadata/projects.csv (one row per project), never from another project's row</span></span>
+<span id="cb21-98"><a href="#cb21-98" aria-hidden="true" tabindex="-1"></a>eml <span class="ot">&lt;-</span> <span class="fu">build_eml</span>(<span class="fu">as.list</span>(project), event, occurrence, <span class="at">meta =</span> <span class="fu">c</span>(</span>
+<span id="cb21-99"><a href="#cb21-99" aria-hidden="true" tabindex="-1"></a>  meta[<span class="fu">c</span>(<span class="st">"abstract"</span>, <span class="st">"license"</span>, <span class="st">"contact_name"</span>, <span class="st">"contact_email"</span>, <span class="st">"organization"</span>)],</span>
+<span id="cb21-100"><a href="#cb21-100" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">instrument =</span> project<span class="sc">$</span>instrument)))</span>
+<span id="cb21-101"><a href="#cb21-101" aria-hidden="true" tabindex="-1"></a><span class="fu">eml_check</span>(eml)</span>
+<span id="cb21-102"><a href="#cb21-102" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(<span class="fu">eml_check</span>(eml)<span class="sc">$</span>level <span class="sc">==</span> <span class="st">"error"</span>))</span>
+<span id="cb21-103"><a href="#cb21-103" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_DWCA, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb21-104"><a href="#cb21-104" aria-hidden="true" tabindex="-1"></a>eml_path <span class="ot">&lt;-</span> <span class="fu">write_eml</span>(eml, <span class="fu">file.path</span>(DIR_DWCA, <span class="st">"eml.xml"</span>))</span>
+<span id="cb21-105"><a href="#cb21-105" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-106"><a href="#cb21-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-107"><a href="#cb21-107" aria-hidden="true" tabindex="-1"></a><span class="fu">## The archive</span></span>
+<span id="cb21-108"><a href="#cb21-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-111"><a href="#cb21-111" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb21-112"><a href="#cb21-112" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: archive</span></span>
+<span id="cb21-113"><a href="#cb21-113" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">dwc_archive</span>(<span class="fu">file.path</span>(DIR_DWCA, <span class="st">"build"</span>), event, occurrence, emof, <span class="at">eml_path =</span> eml_path,</span>
+<span id="cb21-114"><a href="#cb21-114" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dataset_key =</span> DATASET_KEY, <span class="at">version =</span> VERSION)</span>
+<span id="cb21-115"><a href="#cb21-115" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(a)</span>
+<span id="cb21-116"><a href="#cb21-116" aria-hidden="true" tabindex="-1"></a>utils<span class="sc">::</span><span class="fu">unzip</span>(a<span class="sc">$</span>zip, <span class="at">list =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-117"><a href="#cb21-117" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(a<span class="sc">$</span>manifest), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb21-118"><a href="#cb21-118" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb21-119"><a href="#cb21-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-120"><a href="#cb21-120" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next, by a person</span></span>
+<span id="cb21-121"><a href="#cb21-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-122"><a href="#cb21-122" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Review <span class="in">`metadata/taxa_lookup_project-&lt;id&gt;.csv`</span> and the <span class="in">`predicted_included`</span> finding above.</span>
+<span id="cb21-123"><a href="#cb21-123" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Upload <span class="in">`r basename(a$zip)`</span> to the OBIS-USA IPT as a new resource (or a new version of one) and record the</span>
+<span id="cb21-124"><a href="#cb21-124" aria-hidden="true" tabindex="-1"></a>   IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF</span>
+<span id="cb21-125"><a href="#cb21-125" aria-hidden="true" tabindex="-1"></a>   through OBIS-USA.</span>
+<span id="cb21-126"><a href="#cb21-126" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Compare with EcoTaxa's own <span class="in">`collections/export/darwin_core`</span> output for the same project as a cross-check.</span>
+<span id="cb21-127"><a href="#cb21-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-128"><a href="#cb21-128" aria-hidden="true" tabindex="-1"></a><span class="fu">## Lessons learned (project 4, 2026-11-10)</span></span>
+<span id="cb21-129"><a href="#cb21-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-130"><a href="#cb21-130" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Positions of 0,0** are the usual placeholder for "unknown" (project 4's <span class="in">`ws21093_MR_64um`</span>): <span class="in">`dwc_event()`</span></span>
+<span id="cb21-131"><a href="#cb21-131" aria-hidden="true" tabindex="-1"></a>  now publishes them as no coordinates, the same rule as the <span class="co">[</span><span class="ot">sample map</span><span class="co">](map_project-4.qmd)</span>. A latitude or a</span>
+<span id="cb21-132"><a href="#cb21-132" aria-hidden="true" tabindex="-1"></a>  longitude of 0 alone is kept.</span>
+<span id="cb21-133"><a href="#cb21-133" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Validated only** by default: <span class="in">`INCLUDE_PREDICTED`</span> turns on only when a project has no validated object (the</span>
+<span id="cb21-134"><a href="#cb21-134" aria-hidden="true" tabindex="-1"></a>  demo); project 4's 951,833 predictions stay out.</span>
+<span id="cb21-135"><a href="#cb21-135" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Column names differ by instrument.** The eMoF reads <span class="in">`sample_tot_vol`</span> (Zooscan) and <span class="in">`object_esd`</span>; a</span>
+<span id="cb21-136"><a href="#cb21-136" aria-hidden="true" tabindex="-1"></a>  PlanktoScope export has <span class="in">`sample_total_volume`</span>, <span class="in">`sample_concentrated_sample_volume`</span>,</span>
+<span id="cb21-137"><a href="#cb21-137" aria-hidden="true" tabindex="-1"></a>  <span class="in">`sample_dilution_factor`</span> and <span class="in">`object_equivalent_diameter`</span> (pixels, with <span class="in">`process_pixel`</span>). Volume,</span>
+<span id="cb21-138"><a href="#cb21-138" aria-hidden="true" tabindex="-1"></a>  concentration and size are therefore absent for project 4 until the owner confirms units and meaning; the</span>
+<span id="cb21-139"><a href="#cb21-139" aria-hidden="true" tabindex="-1"></a>  mapping belongs in <span class="in">`metadata/`</span>, not guessed in code.</span>
+<span id="cb21-140"><a href="#cb21-140" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Child events have no coordinates**: occurrences on acquisition events (738 for project 4) carry the</span>
+<span id="cb21-141"><a href="#cb21-141" aria-hidden="true" tabindex="-1"></a>  <span class="in">`no_coordinates`</span> warning; OBIS is expected to take them from the parent sample event, to confirm.</span>
+<span id="cb21-142"><a href="#cb21-142" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Metadata per project** comes from <span class="in">`metadata/projects.csv`</span>; a project without a row stops the build rather</span>
+<span id="cb21-143"><a href="#cb21-143" aria-hidden="true" tabindex="-1"></a>  than borrowing the demo's text or license.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

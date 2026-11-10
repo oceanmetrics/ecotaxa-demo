@@ -155,6 +155,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">04 NCEI</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./05_migrate_from-ifremer.html"> 
+<span class="menu-text">05 Migrate</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./map_project-4.html"> 
 <span class="menu-text">Sample map</span></a>
   </li>  
@@ -190,6 +194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#build-the-bag" id="toc-build-the-bag" class="nav-link" data-scroll-target="#build-the-bag">Build the bag</a></li>
   <li><a href="#verify" id="toc-verify" class="nav-link" data-scroll-target="#verify">Verify</a></li>
   <li><a href="#what-a-submission-would-then-look-like-assumption-to-agree" id="toc-what-a-submission-would-then-look-like-assumption-to-agree" class="nav-link" data-scroll-target="#what-a-submission-would-then-look-like-assumption-to-agree">What a submission would then look like (assumption, to agree)</a></li>
+  <li><a href="#lessons-learned-project-4-2026-11-10" id="toc-lessons-learned-project-4-2026-11-10" class="nav-link" data-scroll-target="#lessons-learned-project-4-2026-11-10">Lessons learned (project 4, 2026-11-10)</a></li>
   </ul>
 </nav>
     </div>
@@ -256,14 +261,16 @@ flowchart LR
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(dplyr, readr, tibble, jsonlite, digest, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_id</span>()</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>DATASET_KEY <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"ecotaxa-om-prj"</span>, PROJECT_ID)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>VERSION     <span class="ot">&lt;-</span> <span class="fu">format</span>(<span class="fu">Sys.Date</span>())</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT  <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>DIR_DWCA    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/darwincore"</span>, DATASET_KEY)</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>DIR_NCEI    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/ncei"</span>)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>export_info <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>))</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(export_info)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>meta        <span class="ot">&lt;-</span> <span class="fu">read_project_meta</span>(<span class="fu">here</span>(<span class="st">"metadata/projects.csv"</span>), PROJECT_ID)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>project     <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>() <span class="sc">|&gt;</span> <span class="fu">filter</span>(projid <span class="sc">==</span> PROJECT_ID)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(export_info)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 6
@@ -271,7 +278,7 @@ flowchart LR
  $ source      : chr "data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"
  $ tsv         : chr [1:2] "ecotaxa_m106_mn01_n1_sml.tsv" "ecotaxa_m106_mn01_n2_sml.tsv"
  $ n_objects   : int 8
- $ exported_utc: chr "2026-11-09T19:43:24Z"
+ $ exported_utc: chr "2026-11-10T14:20:07Z"
  $ image_dir   : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data-raw/import_test"</code></pre>
 </div>
 </div>
@@ -286,11 +293,10 @@ flowchart LR
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>eml_path  <span class="ot">&lt;-</span> <span class="fu">file.path</span>(DIR_DWCA, <span class="st">"eml.xml"</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">file.exists</span>(dwca_zip), <span class="fu">file.exists</span>(eml_path), <span class="fu">length</span>(tsv_paths) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>manifest  <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">file.path</span>(DIR_DWCA, <span class="fu">paste0</span>(DATASET_KEY, <span class="st">"_"</span>, VERSION, <span class="st">"_manifest.json"</span>)))</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">basename</span>(<span class="fu">c</span>(tsv_paths, dwca_zip, eml_path))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(tsv_paths), <span class="st">"TSV files;"</span>, <span class="fu">basename</span>(<span class="fu">c</span>(dwca_zip, eml_path)), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "ecotaxa_m106_mn01_n1_sml.tsv"   "ecotaxa_m106_mn01_n2_sml.tsv"  
-[3] "ecotaxa-om-prj2_2026-11-09.zip" "eml.xml"                       </code></pre>
+<pre><code>2 TSV files; ecotaxa-om-prj2_2026-11-10.zip eml.xml </code></pre>
 </div>
 </div>
 </section>
@@ -302,66 +308,97 @@ flowchart LR
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">ncei_package</span>(DIR_NCEI, DATASET_KEY, VERSION, <span class="at">tsv_paths =</span> tsv_paths, <span class="at">image_dir =</span> export_info<span class="sc">$</span>image_dir,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">dwca_zip =</span> dwca_zip, <span class="at">eml_path =</span> eml_path,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">dataset_json =</span> <span class="fu">list</span>(</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">organization =</span> <span class="st">"Ocean Metrics"</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">title =</span> <span class="st">"US EcoTaxa demo, project 2 (Zooscan test set)"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">organization =</span> meta<span class="sc">$</span>organization,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">title =</span> meta<span class="sc">$</span>title,</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">source_project_url =</span> <span class="fu">paste0</span>(<span class="fu">ecotaxa_url</span>(), <span class="st">"/prj/"</span>, PROJECT_ID),</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">dwca_content_hash =</span> manifest<span class="sc">$</span>content_hash,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument =</span> <span class="st">"Zooscan"</span>,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument_vocab =</span> <span class="st">"http://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/"</span>,</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">verification =</span> <span class="st">"classifier predictions only; no validated object in this demo project"</span>,</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                    <span class="at">license =</span> <span class="st">"CC BY 4.0 (demo)"</span>))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument =</span> project<span class="sc">$</span>instrument,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument_vocab =</span> project<span class="sc">$</span>instrument_url,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">verification =</span> meta<span class="sc">$</span>verification,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                    <span class="at">license =</span> meta<span class="sc">$</span>license))</span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(b)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 4
- $ bag      : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/ncei/ecotaxa-om-prj2_2026-11-09"
+ $ bag      : chr "/Users/bbest/Github/oceanmetrics/ecotaxa-demo/data/ncei/ecotaxa-om-prj2_2026-11-10"
  $ n_payload: int 13
- $ bytes    : num 48992
+ $ bytes    : num 49038
  $ n_images : int 8</code></pre>
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">list.files</span>(b<span class="sc">$</span>bag, <span class="at">recursive =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the layout, one line per folder with its file count (a project can hold a million images)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>bag_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(b<span class="sc">$</span>bag, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">folder =</span> <span class="fu">ifelse</span>(<span class="fu">grepl</span>(<span class="st">"/"</span>, bag_files), <span class="fu">sub</span>(<span class="st">"/[^/]+$"</span>, <span class="st">""</span>, bag_files), <span class="st">"."</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">folder =</span> <span class="fu">sub</span>(<span class="st">"^(data/images/[^/]+)/.*$"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, folder)) <span class="sc">|&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(folder) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">40</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>bag-info.txt
-bagit.txt
-data/dwca/ecotaxa-om-prj2_2026-11-09.zip
-data/ecotaxa_export/ecotaxa_m106_mn01_n1_sml.tsv
-data/ecotaxa_export/ecotaxa_m106_mn01_n2_sml.tsv
-data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_409.jpg
-data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_821.jpg
-data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_822.jpg
-data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_850.jpg
-data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_851.jpg
-data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1.jpg
-data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1081.jpg
-data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1111.jpg
-data/metadata/dataset.json
-data/metadata/eml.xml
-manifest-sha256.txt
-tagmanifest-sha256.txt</code></pre>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">folder</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">.</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">data/dwca</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">data/ecotaxa_export</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">data/images/m106_mn01_n1_sml</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">data/images/m106_mn01_n2_sml</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">data/metadata</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"bag-info.txt"</span>)), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"bag-info.txt"</span>)), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Source-Organization: Ocean Metrics
-External-Identifier: ecotaxa-om-prj2_2026-11-09
-Bagging-Date: 2026-11-09
-Payload-Oxum: 48992.13
+External-Identifier: ecotaxa-om-prj2_2026-11-10
+Bagging-Date: 2026-11-10
+Payload-Oxum: 49038.13
 Bag-Size: 0.05 MB
 External-Description: EcoTaxa project export (images, TSV, Darwin Core Archive, metadata) from https://ecotaxa.oceanmetrics.io</code></pre>
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"manifest-sha256.txt"</span>)), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>man_lines <span class="ot">&lt;-</span> <span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"manifest-sha256.txt"</span>))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(man_lines), <span class="st">"payload files in the manifest; the first ten:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>f11b2096a64e06a8bac0978edc03326e0610ad84a8dd03f28bb6e2d2054f1eb2 data/dwca/ecotaxa-om-prj2_2026-11-09.zip
+<pre><code>13 payload files in the manifest; the first ten:</code></pre>
+</div>
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">head</span>(man_lines, <span class="dv">10</span>), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>0f9bfb87e82b14c874f36d1365b420dde5aca1b982345035d56a9a2884227cbb data/dwca/ecotaxa-om-prj2_2026-11-10.zip
 a4d213431182a3e789c3acc144f37566b8021fc819ac08314b11723fb2aca599 data/ecotaxa_export/ecotaxa_m106_mn01_n1_sml.tsv
 c3853fd7c7772ab003880964af8a94d4e4c741063fb3c3ff0f9d8772752d0580 data/ecotaxa_export/ecotaxa_m106_mn01_n2_sml.tsv
 b1fa990e5506362e9800f5c680f5fc91861ad8e648731b39e2a2e00fe6447a51 data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_409.jpg
@@ -370,10 +407,7 @@ c306d6cf252c643d30768bf289bf482c44a6c4ecf8660a89463e91a4e2023466 data/images/m10
 4a1e872eab999fbd958bf58a9dfb45d771197b7d087284e6f1bfb06fdb11ef0c data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_850.jpg
 9daeecb3f2d9cbd43a9fe7497976b7b8b48b0a9a402a3b439241791284b92c5f data/images/m106_mn01_n1_sml/m106_mn01_n1_sml_851.jpg
 49c177d9947596053b66dad8537920926c7232ce5ed8416c8f842c1aeb9ae102 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1.jpg
-230b403667dbb197969c20e3eb0ded7a58f42a9322486e1fa421695ff5f69fcd data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1081.jpg
-7d297b65336d3750341dbec2ce75e77fe6dc2f6bc722fb62585d282a89152d75 data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1111.jpg
-d1d35ca749040d0c504463758d527e9a999e4ca8714e3f622ee43e9934db5c10 data/metadata/dataset.json
-6eb0c08b7ebab7b89e9ecb52f6eec230d465c73286abd33bb3386f8f25d421ae data/metadata/eml.xml</code></pre>
+230b403667dbb197969c20e3eb0ded7a58f42a9322486e1fa421695ff5f69fcd data/images/m106_mn01_n2_sml/m106_mn01_n2_sml_1081.jpg</code></pre>
 </div>
 </div>
 </section>
@@ -382,7 +416,8 @@ d1d35ca749040d0c504463758d527e9a999e4ca8714e3f622ee43e9934db5c10 data/metadata/d
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ncei_verify</span>(b<span class="sc">$</span>bag)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">ncei_verify</span>(b<span class="sc">$</span>bag)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -404,7 +439,7 @@ d1d35ca749040d0c504463758d527e9a999e4ca8714e3f622ee43e9934db5c10 data/metadata/d
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">ncei_verify</span>(b<span class="sc">$</span>bag)<span class="sc">$</span>finding, <span class="st">"ok"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(v<span class="sc">$</span>finding, <span class="st">"ok"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -416,6 +451,15 @@ d1d35ca749040d0c504463758d527e9a999e4ca8714e3f622ee43e9934db5c10 data/metadata/d
 <li>On accession, write the accession number and DOI back into the project’s EML, so the next DwC-A version cites the archived copy.</li>
 <li>A re-validation or a new cruise makes a <strong>new version</strong>; a submitted version is never edited.</li>
 </ol>
+</section>
+<section id="lessons-learned-project-4-2026-11-10" class="level2">
+<h2 class="anchored" data-anchor-id="lessons-learned-project-4-2026-11-10">Lessons learned (project 4, 2026-11-10)</h2>
+<ul>
+<li><strong>Scale.</strong> Project 4’s bag is 10.05 GB, 967,734 images and 967,842 payload files; build, manifest and verify (<code>ok</code>) take 12 minutes on the mini. Two loops that were fine on eight objects were not: copying one image per call (now one vectorized <code>file.copy</code>), and <code>ncei_verify()</code> looking each manifest entry up by name inside a loop, which is quadratic and ran for over half an hour without finishing (now one vectorized comparison; a test covers missing, unlisted and changed files together).</li>
+<li><strong>Spotlight</strong> on macOS indexes every new image and competes for the CPU; <code>data/.metadata_never_index</code> (made by <code>scripts/render_project.sh</code>) keeps it off.</li>
+<li><strong>One image per object</strong>: exporting with <code>with_images = "first"</code> is what removed the duplicate second images of the Ifremer backup; an <code>"all"</code> export would bring them back into the bag.</li>
+<li>Print counts and the first lines, never a million-line listing, into a rendered page.</li>
+</ul>
 
 
 <!-- -->
@@ -874,94 +918,116 @@ d1d35ca749040d0c504463758d527e9a999e4ca8714e3f622ee43e9934db5c10 data/metadata/d
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "04 Assemble the archive package for NCEI"</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Images, TSV, DwC-A, metadata, SHA-256 manifest, verified locally. No submission."</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>%%| file: diagrams/ncei.mmd</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## Status</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>The package layout below is a **proposal** to agree with NCEI and with Matt Biddle and Enrique Montes,</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>who are already working on NCEI publication of EcoTaxa data (the SECOORA LOI also names FathomNet in that</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>work). It is BagIt-style because a checksummed, self-describing bag survives any transport. Which route NCEI</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>prefers (Send2NCEI for a one-off, ATRAC with a submission agreement for a recurring flow, or a FathomNet-mediated</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>path) and which metadata profile the imaging pipeline requires are the first questions for them; nothing here</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>is an NCEI decision, and nothing here submits.</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(dplyr, readr, tibble, jsonlite, digest, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>DATASET_KEY <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"ecotaxa-om-prj"</span>, PROJECT_ID)</span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>VERSION     <span class="ot">&lt;-</span> <span class="fu">format</span>(<span class="fu">Sys.Date</span>())</span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT  <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>DIR_DWCA    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/darwincore"</span>, DATASET_KEY)</span>
-<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>DIR_NCEI    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/ncei"</span>)</span>
-<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>export_info <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>))</span>
-<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(export_info)</span>
-<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inputs: one project at one dated version</span></span>
-<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: inputs</span></span>
-<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>tsv_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(export_info<span class="sc">$</span>image_dir, <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.tsv$"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>dwca_zip  <span class="ot">&lt;-</span> <span class="fu">file.path</span>(DIR_DWCA, <span class="fu">paste0</span>(DATASET_KEY, <span class="st">"_"</span>, VERSION, <span class="st">".zip"</span>))</span>
-<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a>eml_path  <span class="ot">&lt;-</span> <span class="fu">file.path</span>(DIR_DWCA, <span class="st">"eml.xml"</span>)</span>
-<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">file.exists</span>(dwca_zip), <span class="fu">file.exists</span>(eml_path), <span class="fu">length</span>(tsv_paths) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
-<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>manifest  <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">file.path</span>(DIR_DWCA, <span class="fu">paste0</span>(DATASET_KEY, <span class="st">"_"</span>, VERSION, <span class="st">"_manifest.json"</span>)))</span>
-<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a><span class="fu">basename</span>(<span class="fu">c</span>(tsv_paths, dwca_zip, eml_path))</span>
-<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a><span class="fu">## Build the bag</span></span>
-<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: build</span></span>
-<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">ncei_package</span>(DIR_NCEI, DATASET_KEY, VERSION, <span class="at">tsv_paths =</span> tsv_paths, <span class="at">image_dir =</span> export_info<span class="sc">$</span>image_dir,</span>
-<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a>                  <span class="at">dwca_zip =</span> dwca_zip, <span class="at">eml_path =</span> eml_path,</span>
-<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a>                  <span class="at">dataset_json =</span> <span class="fu">list</span>(</span>
-<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a>                    <span class="at">organization =</span> <span class="st">"Ocean Metrics"</span>,</span>
-<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a>                    <span class="at">title =</span> <span class="st">"US EcoTaxa demo, project 2 (Zooscan test set)"</span>,</span>
-<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>                    <span class="at">source_project_url =</span> <span class="fu">paste0</span>(<span class="fu">ecotaxa_url</span>(), <span class="st">"/prj/"</span>, PROJECT_ID),</span>
-<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>                    <span class="at">dwca_content_hash =</span> manifest<span class="sc">$</span>content_hash,</span>
-<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument =</span> <span class="st">"Zooscan"</span>,</span>
-<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument_vocab =</span> <span class="st">"http://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/"</span>,</span>
-<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a>                    <span class="at">verification =</span> <span class="st">"classifier predictions only; no validated object in this demo project"</span>,</span>
-<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a>                    <span class="at">license =</span> <span class="st">"CC BY 4.0 (demo)"</span>))</span>
-<span id="cb15-68"><a href="#cb15-68" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(b)</span>
-<span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">list.files</span>(b<span class="sc">$</span>bag, <span class="at">recursive =</span> <span class="cn">TRUE</span>), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tagfiles</span></span>
-<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"bag-info.txt"</span>)), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"manifest-sha256.txt"</span>)), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-80"><a href="#cb15-80" aria-hidden="true" tabindex="-1"></a><span class="fu">## Verify</span></span>
-<span id="cb15-81"><a href="#cb15-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-84"><a href="#cb15-84" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb15-85"><a href="#cb15-85" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: verify</span></span>
-<span id="cb15-86"><a href="#cb15-86" aria-hidden="true" tabindex="-1"></a><span class="fu">ncei_verify</span>(b<span class="sc">$</span>bag)</span>
-<span id="cb15-87"><a href="#cb15-87" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(<span class="fu">ncei_verify</span>(b<span class="sc">$</span>bag)<span class="sc">$</span>finding, <span class="st">"ok"</span>))</span>
-<span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a><span class="fu">## What a submission would then look like (assumption, to agree)</span></span>
-<span id="cb15-91"><a href="#cb15-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-92"><a href="#cb15-92" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Copy the bag to the staging bucket (egress-free object storage; a public copy via NODD if NOAA wants one),</span>
-<span id="cb15-93"><a href="#cb15-93" aria-hidden="true" tabindex="-1"></a>   under <span class="in">`ecotaxa/{dataset_key}/{version}/`</span>.</span>
-<span id="cb15-94"><a href="#cb15-94" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Send NCEI the bag's location and <span class="in">`bag-info.txt`</span> through the agreed route (S2N for a pilot; ATRAC with a</span>
-<span id="cb15-95"><a href="#cb15-95" aria-hidden="true" tabindex="-1"></a>   submission agreement for the recurring flow). The ISO 19115-2 record NCEI needs would be generated from the</span>
-<span id="cb15-96"><a href="#cb15-96" aria-hidden="true" tabindex="-1"></a>   same EML with NCEI's template once the profile is agreed; <span class="in">`data/metadata/dataset.json`</span> holds the ACDD-style</span>
-<span id="cb15-97"><a href="#cb15-97" aria-hidden="true" tabindex="-1"></a>   attributes it would draw on.</span>
-<span id="cb15-98"><a href="#cb15-98" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>On accession, write the accession number and DOI back into the project's EML, so the next DwC-A version</span>
-<span id="cb15-99"><a href="#cb15-99" aria-hidden="true" tabindex="-1"></a>   cites the archived copy.</span>
-<span id="cb15-100"><a href="#cb15-100" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>A re-validation or a new cruise makes a **new version**; a submitted version is never edited.</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "04 Assemble the archive package for NCEI"</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Images, TSV, DwC-A, metadata, SHA-256 manifest, verified locally. No submission."</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>%%| file: diagrams/ncei.mmd</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## Status</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>The package layout below is a **proposal** to agree with NCEI and with Matt Biddle and Enrique Montes,</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>who are already working on NCEI publication of EcoTaxa data (the SECOORA LOI also names FathomNet in that</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>work). It is BagIt-style because a checksummed, self-describing bag survives any transport. Which route NCEI</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>prefers (Send2NCEI for a one-off, ATRAC with a submission agreement for a recurring flow, or a FathomNet-mediated</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>path) and which metadata profile the imaging pipeline requires are the first questions for them; nothing here</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>is an NCEI decision, and nothing here submits.</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(dplyr, readr, tibble, jsonlite, digest, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>PROJECT_ID  <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_id</span>()</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>DATASET_KEY <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"ecotaxa-om-prj"</span>, PROJECT_ID)</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>VERSION     <span class="ot">&lt;-</span> <span class="fu">format</span>(<span class="fu">Sys.Date</span>())</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT  <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>DIR_DWCA    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/darwincore"</span>, DATASET_KEY)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>DIR_NCEI    <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/ncei"</span>)</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>export_info <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>))</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>meta        <span class="ot">&lt;-</span> <span class="fu">read_project_meta</span>(<span class="fu">here</span>(<span class="st">"metadata/projects.csv"</span>), PROJECT_ID)</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>project     <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>() <span class="sc">|&gt;</span> <span class="fu">filter</span>(projid <span class="sc">==</span> PROJECT_ID)</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(export_info)</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a><span class="fu">## Inputs: one project at one dated version</span></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: inputs</span></span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>tsv_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(export_info<span class="sc">$</span>image_dir, <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.tsv$"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>dwca_zip  <span class="ot">&lt;-</span> <span class="fu">file.path</span>(DIR_DWCA, <span class="fu">paste0</span>(DATASET_KEY, <span class="st">"_"</span>, VERSION, <span class="st">".zip"</span>))</span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>eml_path  <span class="ot">&lt;-</span> <span class="fu">file.path</span>(DIR_DWCA, <span class="st">"eml.xml"</span>)</span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">file.exists</span>(dwca_zip), <span class="fu">file.exists</span>(eml_path), <span class="fu">length</span>(tsv_paths) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>manifest  <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(<span class="fu">file.path</span>(DIR_DWCA, <span class="fu">paste0</span>(DATASET_KEY, <span class="st">"_"</span>, VERSION, <span class="st">"_manifest.json"</span>)))</span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(tsv_paths), <span class="st">"TSV files;"</span>, <span class="fu">basename</span>(<span class="fu">c</span>(dwca_zip, eml_path)), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a><span class="fu">## Build the bag</span></span>
+<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-57"><a href="#cb16-57" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-58"><a href="#cb16-58" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: build</span></span>
+<span id="cb16-59"><a href="#cb16-59" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">ncei_package</span>(DIR_NCEI, DATASET_KEY, VERSION, <span class="at">tsv_paths =</span> tsv_paths, <span class="at">image_dir =</span> export_info<span class="sc">$</span>image_dir,</span>
+<span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a>                  <span class="at">dwca_zip =</span> dwca_zip, <span class="at">eml_path =</span> eml_path,</span>
+<span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>                  <span class="at">dataset_json =</span> <span class="fu">list</span>(</span>
+<span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a>                    <span class="at">organization =</span> meta<span class="sc">$</span>organization,</span>
+<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a>                    <span class="at">title =</span> meta<span class="sc">$</span>title,</span>
+<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a>                    <span class="at">source_project_url =</span> <span class="fu">paste0</span>(<span class="fu">ecotaxa_url</span>(), <span class="st">"/prj/"</span>, PROJECT_ID),</span>
+<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a>                    <span class="at">dwca_content_hash =</span> manifest<span class="sc">$</span>content_hash,</span>
+<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument =</span> project<span class="sc">$</span>instrument,</span>
+<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>                    <span class="at">instrument_vocab =</span> project<span class="sc">$</span>instrument_url,</span>
+<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>                    <span class="at">verification =</span> meta<span class="sc">$</span>verification,</span>
+<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a>                    <span class="at">license =</span> meta<span class="sc">$</span>license))</span>
+<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(b)</span>
+<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a><span class="co"># the layout, one line per folder with its file count (a project can hold a million images)</span></span>
+<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>bag_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(b<span class="sc">$</span>bag, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(<span class="at">folder =</span> <span class="fu">ifelse</span>(<span class="fu">grepl</span>(<span class="st">"/"</span>, bag_files), <span class="fu">sub</span>(<span class="st">"/[^/]+$"</span>, <span class="st">""</span>, bag_files), <span class="st">"."</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb16-74"><a href="#cb16-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">folder =</span> <span class="fu">sub</span>(<span class="st">"^(data/images/[^/]+)/.*$"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, folder)) <span class="sc">|&gt;</span></span>
+<span id="cb16-75"><a href="#cb16-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(folder) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">40</span>)</span>
+<span id="cb16-76"><a href="#cb16-76" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-77"><a href="#cb16-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tagfiles</span></span>
+<span id="cb16-82"><a href="#cb16-82" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"bag-info.txt"</span>)), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-83"><a href="#cb16-83" aria-hidden="true" tabindex="-1"></a>man_lines <span class="ot">&lt;-</span> <span class="fu">readLines</span>(<span class="fu">file.path</span>(b<span class="sc">$</span>bag, <span class="st">"manifest-sha256.txt"</span>))</span>
+<span id="cb16-84"><a href="#cb16-84" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(man_lines), <span class="st">"payload files in the manifest; the first ten:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-85"><a href="#cb16-85" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">head</span>(man_lines, <span class="dv">10</span>), <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-86"><a href="#cb16-86" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-87"><a href="#cb16-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-88"><a href="#cb16-88" aria-hidden="true" tabindex="-1"></a><span class="fu">## Verify</span></span>
+<span id="cb16-89"><a href="#cb16-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-93"><a href="#cb16-93" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: verify</span></span>
+<span id="cb16-94"><a href="#cb16-94" aria-hidden="true" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">ncei_verify</span>(b<span class="sc">$</span>bag)</span>
+<span id="cb16-95"><a href="#cb16-95" aria-hidden="true" tabindex="-1"></a>v</span>
+<span id="cb16-96"><a href="#cb16-96" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">identical</span>(v<span class="sc">$</span>finding, <span class="st">"ok"</span>))</span>
+<span id="cb16-97"><a href="#cb16-97" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-98"><a href="#cb16-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-99"><a href="#cb16-99" aria-hidden="true" tabindex="-1"></a><span class="fu">## What a submission would then look like (assumption, to agree)</span></span>
+<span id="cb16-100"><a href="#cb16-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-101"><a href="#cb16-101" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Copy the bag to the staging bucket (egress-free object storage; a public copy via NODD if NOAA wants one),</span>
+<span id="cb16-102"><a href="#cb16-102" aria-hidden="true" tabindex="-1"></a>   under <span class="in">`ecotaxa/{dataset_key}/{version}/`</span>.</span>
+<span id="cb16-103"><a href="#cb16-103" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Send NCEI the bag's location and <span class="in">`bag-info.txt`</span> through the agreed route (S2N for a pilot; ATRAC with a</span>
+<span id="cb16-104"><a href="#cb16-104" aria-hidden="true" tabindex="-1"></a>   submission agreement for the recurring flow). The ISO 19115-2 record NCEI needs would be generated from the</span>
+<span id="cb16-105"><a href="#cb16-105" aria-hidden="true" tabindex="-1"></a>   same EML with NCEI's template once the profile is agreed; <span class="in">`data/metadata/dataset.json`</span> holds the ACDD-style</span>
+<span id="cb16-106"><a href="#cb16-106" aria-hidden="true" tabindex="-1"></a>   attributes it would draw on.</span>
+<span id="cb16-107"><a href="#cb16-107" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>On accession, write the accession number and DOI back into the project's EML, so the next DwC-A version</span>
+<span id="cb16-108"><a href="#cb16-108" aria-hidden="true" tabindex="-1"></a>   cites the archived copy.</span>
+<span id="cb16-109"><a href="#cb16-109" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>A re-validation or a new cruise makes a **new version**; a submitted version is never edited.</span>
+<span id="cb16-110"><a href="#cb16-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-111"><a href="#cb16-111" aria-hidden="true" tabindex="-1"></a><span class="fu">## Lessons learned (project 4, 2026-11-10)</span></span>
+<span id="cb16-112"><a href="#cb16-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-113"><a href="#cb16-113" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scale.** Project 4's bag is 10.05 GB, 967,734 images and 967,842 payload files; build, manifest and verify</span>
+<span id="cb16-114"><a href="#cb16-114" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`ok`</span>) take 12 minutes on the mini. Two loops that were fine on</span>
+<span id="cb16-115"><a href="#cb16-115" aria-hidden="true" tabindex="-1"></a>  eight objects were not: copying one image per call (now one vectorized <span class="in">`file.copy`</span>), and <span class="in">`ncei_verify()`</span></span>
+<span id="cb16-116"><a href="#cb16-116" aria-hidden="true" tabindex="-1"></a>  looking each manifest entry up by name inside a loop, which is quadratic and ran for over half an hour</span>
+<span id="cb16-117"><a href="#cb16-117" aria-hidden="true" tabindex="-1"></a>  without finishing (now one vectorized comparison; a test covers missing, unlisted and changed files together).</span>
+<span id="cb16-118"><a href="#cb16-118" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Spotlight** on macOS indexes every new image and competes for the CPU; <span class="in">`data/.metadata_never_index`</span> (made</span>
+<span id="cb16-119"><a href="#cb16-119" aria-hidden="true" tabindex="-1"></a>  by <span class="in">`scripts/render_project.sh`</span>) keeps it off.</span>
+<span id="cb16-120"><a href="#cb16-120" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**One image per object**: exporting with <span class="in">`with_images = "first"`</span> is what removed the duplicate second images</span>
+<span id="cb16-121"><a href="#cb16-121" aria-hidden="true" tabindex="-1"></a>  of the Ifremer backup; an <span class="in">`"all"`</span> export would bring them back into the bag.</span>
+<span id="cb16-122"><a href="#cb16-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Print counts and the first lines, never a million-line listing, into a rendered page.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

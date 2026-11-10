@@ -155,6 +155,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">04 NCEI</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./05_migrate_from-ifremer.html"> 
+<span class="menu-text">05 Migrate</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./map_project-4.html"> 
 <span class="menu-text">Sample map</span></a>
   </li>  
@@ -190,6 +194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#export" id="toc-export" class="nav-link" data-scroll-target="#export">Export</a></li>
   <li><a href="#cache" id="toc-cache" class="nav-link" data-scroll-target="#cache">Cache</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
+  <li><a href="#lessons-learned-project-4-2026-11-10" id="toc-lessons-learned-project-4-2026-11-10" class="nav-link" data-scroll-target="#lessons-learned-project-4-2026-11-10">Lessons learned (project 4, 2026-11-10)</a></li>
   </ul>
 </nav>
     </div>
@@ -251,16 +256,23 @@ flowchart LR
 </div>
 <section id="what-this-does" class="level2">
 <h2 class="anchored" data-anchor-id="what-this-does">What this does</h2>
-<p>EcoTaxa’s REST API (<code>{ECOTAXA_URL}/api/docs</code>) exposes a <strong>general export</strong> job: it writes a zip with one TSV per sample (object, sample, acquisition and process fields, plus each object’s category, annotation status, annotator and date) and, optionally, the images. This notebook logs in with a token, starts the job for project 2, waits for it, downloads and unzips it under <code>data/export/</code>, and reads the TSVs into one objects table cached as Parquet. Later notebooks read the cache and never touch the node.</p>
-<p>Credentials come from a git-ignored <code>.Renviron</code> (<code>ECOTAXA_URL</code>, <code>ECOTAXA_USER</code>, <code>ECOTAXA_PASSWORD</code>). When no login is configured, the notebook falls back to the upstream test set in <code>data-raw/import_test/</code>, which is the byte-identical source of project 2’s eight objects (see <code>data-raw/README.md</code>), so the rest of the pipeline still runs on the same data; it says so below.</p>
+<p>EcoTaxa’s REST API (<code>{ECOTAXA_URL}/api/docs</code>) exposes a <strong>general export</strong> job: it writes a zip with one TSV per sample (object, sample, acquisition and process fields, plus each object’s category, annotation status, annotator and date) and, optionally, the images. This notebook logs in with a token, starts the job for the project, waits for it, downloads and unzips it under <code>data/export/</code>, and reads the TSVs into one objects table cached as Parquet. Later notebooks read the cache and never touch the node.</p>
+<p>The project is <code>ECOTAXA_PROJECT_ID</code> (default 2, the demo project; the setup below prints which one this page ran on). Credentials come from a git-ignored <code>.Renviron</code> (<code>ECOTAXA_URL</code>, <code>ECOTAXA_USER</code>, <code>ECOTAXA_PASSWORD</code>) or from <code>ECOTAXA_TOKEN</code>, a login token handed to the render so no password sits on the machine. An export already unzipped under <code>data/export/</code> is reused unless <code>ECOTAXA_REFRESH=1</code>. When no login is configured on project 2, the notebook falls back to the upstream test set in <code>data-raw/import_test/</code>, which is the byte-identical source of project 2’s eight objects (see <code>data-raw/README.md</code>), so the rest of the pipeline still runs on the same data; it says so below.</p>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(httr2, dplyr, readr, tibble, arrow, jsonlite, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>PROJECT_ID <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>PROJECT_ID <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_id</span>()</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"project"</span>, PROJECT_ID, <span class="st">"on"</span>, <span class="fu">ecotaxa_url</span>(), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>project 2 on https://ecotaxa.oceanmetrics.io </code></pre>
+</div>
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -270,8 +282,8 @@ flowchart LR
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>projects <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>()</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>projects <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url, objcount, pctvalidated, pctclassified)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>projects <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>projects <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url, objcount, pctvalidated, pctclassified)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
@@ -330,8 +342,8 @@ flowchart LR
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_taxo_stats</span>(PROJECT_ID)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(stats)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_taxo_stats</span>(PROJECT_ID)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(stats)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 5
@@ -348,58 +360,87 @@ flowchart LR
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">ecotaxa_has_login</span>()) {</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  token <span class="ot">&lt;-</span> <span class="fu">ecotaxa_login</span>()</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">ecotaxa_export</span>(PROJECT_ID, DIR_EXPORT, <span class="at">token =</span> token, <span class="at">with_images =</span> <span class="st">"first"</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"EcoTaxa API general export"</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.tsv$"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"objects come from:"</span>, source_of_objects, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>prior <span class="ot">&lt;-</span> <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>reuse <span class="ot">&lt;-</span> <span class="fu">file.exists</span>(prior) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">identical</span>(<span class="fu">Sys.getenv</span>(<span class="st">"ECOTAXA_REFRESH"</span>), <span class="st">"1"</span>) <span class="sc">&amp;&amp;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">grepl</span>(<span class="st">"^EcoTaxa API"</span>, <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>source) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(<span class="fu">ecotaxa_export_tsvs</span>(DIR_EXPORT)) <span class="sc">&gt;</span> <span class="dv">0</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (reuse) {</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">ecotaxa_export_tsvs</span>(DIR_EXPORT)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>source</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"reusing the export of"</span>, <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>exported_utc, <span class="st">"(set ECOTAXA_REFRESH=1 to export again)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">ecotaxa_has_login</span>()) {</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  token <span class="ot">&lt;-</span> <span class="fu">ecotaxa_login</span>()</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># a project of a million objects with images takes the node well over the default ten minutes</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">ecotaxa_export</span>(PROJECT_ID, DIR_EXPORT, <span class="at">token =</span> token, <span class="at">with_images =</span> <span class="st">"first"</span>, <span class="at">timeout_s =</span> <span class="dv">6</span> <span class="sc">*</span> <span class="dv">3600</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"EcoTaxa API general export"</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="st">"without a login only project 2 has a local fallback"</span> <span class="ot">=</span> PROJECT_ID <span class="sc">==</span> <span class="dv">2</span>L)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.tsv$"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"objects come from:"</span>, source_of_objects, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>objects come from: data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session) </code></pre>
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">basename</span>(tsv_paths)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(tsv_paths), <span class="st">"TSV files:"</span>, <span class="fu">head</span>(<span class="fu">basename</span>(tsv_paths), <span class="dv">5</span>), <span class="cf">if</span> (<span class="fu">length</span>(tsv_paths) <span class="sc">&gt;</span> <span class="dv">5</span>) <span class="st">"..."</span>, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "ecotaxa_m106_mn01_n1_sml.tsv" "ecotaxa_m106_mn01_n2_sml.tsv"</code></pre>
+<pre><code>2 TSV files: ecotaxa_m106_mn01_n1_sml.tsv ecotaxa_m106_mn01_n2_sml.tsv </code></pre>
 </div>
 </div>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>objects <span class="ot">&lt;-</span> <span class="fu">read_ecotaxa_export</span>(tsv_paths)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">nrow</span>(objects), <span class="st">"objects,"</span>, <span class="fu">n_distinct</span>(objects<span class="sc">$</span>sample_id), <span class="st">"samples,"</span>,</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">n_distinct</span>(objects<span class="sc">$</span>acq_id), <span class="st">"acquisitions,"</span>, <span class="fu">ncol</span>(objects), <span class="st">"columns</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>objects <span class="ot">&lt;-</span> <span class="fu">read_ecotaxa_export</span>(tsv_paths)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># a general export without internal ids has the category's display name but not its id: resolve the</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># id from the project's own categories, where each display name is unique</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="st">"object_annotation_category_id"</span> <span class="sc">%in%</span> <span class="fu">names</span>(objects)) {</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  cats <span class="ot">&lt;-</span> <span class="fu">ecotaxa_taxa</span>(stats<span class="sc">$</span>used_taxa)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  objects<span class="sc">$</span>object_annotation_category_id <span class="ot">&lt;-</span> <span class="fu">ecotaxa_category_ids</span>(objects<span class="sc">$</span>object_annotation_category, cats)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"category ids resolved from"</span>, <span class="fu">nrow</span>(cats), <span class="st">"project categories</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">nrow</span>(objects), <span class="st">"objects,"</span>, <span class="fu">n_distinct</span>(objects<span class="sc">$</span>sample_id), <span class="st">"samples,"</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">n_distinct</span>(objects<span class="sc">$</span>acq_id), <span class="st">"acquisitions,"</span>, <span class="fu">ncol</span>(objects), <span class="st">"columns</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>8 objects, 2 samples, 2 acquisitions, 90 columns</code></pre>
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(sample_id, acq_id, object_annotation_status, object_annotation_category, object_annotation_category_id)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span> <span class="fu">count</span>(object_annotation_status)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div class="kable-table">
 <table class="caption-top table table-sm table-striped small">
-<colgroup>
-<col style="width: 13%">
-<col style="width: 19%">
-<col style="width: 19%">
-<col style="width: 21%">
-<col style="width: 23%">
-<col style="width: 2%">
-</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">sample_id</th>
-<th style="text-align: left;">acq_id</th>
 <th style="text-align: left;">object_annotation_status</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">predicted</td>
+<td style="text-align: right;">8</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<details open="" class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the most common categories (the whole table for a small project)</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(object_annotation_category, object_annotation_category_id, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">25</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div class="kable-table">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
 <th style="text-align: left;">object_annotation_category</th>
 <th style="text-align: left;">object_annotation_category_id</th>
 <th style="text-align: right;">n</th>
@@ -407,51 +448,33 @@ flowchart LR
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">m106_mn01_n1_sml</td>
-<td style="text-align: left;">generic_m106_mn01_n1_sml</td>
-<td style="text-align: left;">predicted</td>
+<td style="text-align: left;">Oncaeidae</td>
+<td style="text-align: left;">78418</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">detritus</td>
+<td style="text-align: left;">84963</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Cyclopoida</td>
 <td style="text-align: left;">45072</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">m106_mn01_n1_sml</td>
-<td style="text-align: left;">generic_m106_mn01_n1_sml</td>
-<td style="text-align: left;">predicted</td>
-<td style="text-align: left;">Oncaeidae</td>
-<td style="text-align: left;">78418</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: left;">egg&lt;other</td>
+<td style="text-align: left;">85078</td>
+<td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">m106_mn01_n1_sml</td>
-<td style="text-align: left;">generic_m106_mn01_n1_sml</td>
-<td style="text-align: left;">predicted</td>
 <td style="text-align: left;">other&lt;living</td>
 <td style="text-align: left;">85011</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">m106_mn01_n1_sml</td>
-<td style="text-align: left;">generic_m106_mn01_n1_sml</td>
-<td style="text-align: left;">predicted</td>
 <td style="text-align: left;">t001</td>
 <td style="text-align: left;">85012</td>
-<td style="text-align: right;">1</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">m106_mn01_n2_sml</td>
-<td style="text-align: left;">generic_m106_mn01_n2_sml</td>
-<td style="text-align: left;">predicted</td>
-<td style="text-align: left;">detritus</td>
-<td style="text-align: left;">84963</td>
-<td style="text-align: right;">2</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">m106_mn01_n2_sml</td>
-<td style="text-align: left;">generic_m106_mn01_n2_sml</td>
-<td style="text-align: left;">predicted</td>
-<td style="text-align: left;">egg&lt;other</td>
-<td style="text-align: left;">85078</td>
 <td style="text-align: right;">1</td>
 </tr>
 </tbody>
@@ -465,15 +488,18 @@ flowchart LR
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(objects, <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"objects.parquet"</span>))</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">writeLines</span>(<span class="fu">toJSON</span>(<span class="fu">list</span>(<span class="at">project_id =</span> PROJECT_ID, <span class="at">source =</span> source_of_objects, <span class="at">tsv =</span> <span class="fu">basename</span>(tsv_paths),</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">n_objects =</span> <span class="fu">nrow</span>(objects), <span class="at">exported_utc =</span> <span class="fu">format</span>(<span class="fu">Sys.time</span>(), <span class="st">"%Y-%m-%dT%H:%M:%SZ"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>),</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">image_dir =</span> <span class="cf">if</span> (<span class="fu">ecotaxa_has_login</span>()) DIR_EXPORT <span class="cf">else</span> <span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>)),</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">auto_unbox =</span> <span class="cn">TRUE</span>, <span class="at">pretty =</span> <span class="cn">TRUE</span>), <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>))</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(objects, <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"objects.parquet"</span>))</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>from_api <span class="ot">&lt;-</span> <span class="fu">grepl</span>(<span class="st">"^EcoTaxa API"</span>, source_of_objects)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>exported <span class="ot">&lt;-</span> <span class="cf">if</span> (reuse) <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>exported_utc <span class="cf">else</span> <span class="fu">format</span>(<span class="fu">Sys.time</span>(), <span class="st">"%Y-%m-%dT%H:%M:%SZ"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="fu">writeLines</span>(<span class="fu">toJSON</span>(<span class="fu">list</span>(<span class="at">project_id =</span> PROJECT_ID, <span class="at">source =</span> source_of_objects, <span class="at">tsv =</span> <span class="fu">basename</span>(tsv_paths),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">n_objects =</span> <span class="fu">nrow</span>(objects), <span class="at">exported_utc =</span> exported,</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                       <span class="at">image_dir =</span> <span class="cf">if</span> (from_api) DIR_EXPORT <span class="cf">else</span> <span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>)),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">auto_unbox =</span> <span class="cn">TRUE</span>, <span class="at">pretty =</span> <span class="cn">TRUE</span>), <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>))</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(files), <span class="st">"files;"</span>, <span class="fu">sum</span>(<span class="fu">grepl</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">.(jpg|jpeg|png)$"</span>, files, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>)), <span class="st">"images</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "export.json"     "objects.parquet"</code></pre>
+<pre><code>2 files; 0 images</code></pre>
 </div>
 </div>
 </section>
@@ -484,6 +510,47 @@ flowchart LR
 <li>A login token from <code>POST /api/login</code> is a JWT; the API also offers <code>/token</code> with a refresh token, which a scheduled pipeline should prefer.</li>
 <li><code>with_images = "first"</code> ships the visible image per object; <code>"all"</code> can produce several TSV lines per object.</li>
 </ul>
+</section>
+<section id="lessons-learned-project-4-2026-11-10" class="level2">
+<h2 class="anchored" data-anchor-id="lessons-learned-project-4-2026-11-10">Lessons learned (project 4, 2026-11-10)</h2>
+<p>The first real export, of 967,734 objects, found five things the eight-object demo could not. Each is now handled in <code>R/ecotaxa_api.R</code> or <code>R/taxa.R</code>, with a test:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>What happened</th>
+<th>Cause</th>
+<th>Now</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>422 Unprocessable Entity</code> on starting the job</td>
+<td><code>split_by = ""</code> is not in the node’s enum (<code>sample</code>, <code>acquisition</code>, <code>taxon</code>, <code>none</code>)</td>
+<td><code>ecotaxa_export_body()</code> checks against the OpenAPI enums</td>
+</tr>
+<tr class="even">
+<td><code>500</code>, <code>relation "taxo_recast" does not exist</code></td>
+<td>the node’s DB was built without two tables (a node issue, not a pipeline one)</td>
+<td>fixed on the node; see <a href="./05_migrate_from-ifremer.html">05 Migrate</a></td>
+</tr>
+<tr class="odd">
+<td>the job sat at “1 % Start TSV export” forever</td>
+<td>the back end was OOM-killed (2.44 GB container) loading every row at once; the job row is never updated after that</td>
+<td>one job per batch of samples, at most <code>max_objects</code> (40,000) each; a job whose progress stalls for 20 min stops the run</td>
+</tr>
+<tr class="even">
+<td><code>object_annotation_category_id</code> missing</td>
+<td>the export carries internal ids only with <code>with_internal_ids</code></td>
+<td>the id is resolved from the category’s display name (unique on a node) against the project’s own categories; no match stops</td>
+</tr>
+<tr class="odd">
+<td>every date blank downstream</td>
+<td>the export writes <code>YYYY-MM-DD</code> and <code>HH:MM:SS</code>, the import format is <code>YYYYMMDD</code> and <code>HHMMSS</code></td>
+<td><code>ecotaxa_datetime()</code> reads both</td>
+</tr>
+</tbody>
+</table>
+<p>Also: download with a long timeout and unzip with the system <code>unzip</code> (zip64, over 4 GB); batches leave a marker under <code>data/export/project-&lt;id&gt;/batches/</code>, so a stopped run resumes after the last finished batch; each finished job is deleted on the node so its files do not fill the node’s disk. For project 4 the 28 batches took 44 minutes and gave 105 TSVs and exactly one image per object (967,734), which also removed the 6,962 byte-identical second images the backup carried.</p>
 
 
 <!-- -->
@@ -942,94 +1009,139 @@ flowchart LR
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "01 Export a project from EcoTaxa"</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "REST API, token login, general export job, cached locally"</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>%%| file: diagrams/obis.mmd</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## What this does</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>EcoTaxa's REST API (<span class="in">`{ECOTAXA_URL}/api/docs`</span>) exposes a **general export** job: it writes a zip with one TSV</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>per sample (object, sample, acquisition and process fields, plus each object's category, annotation status,</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>annotator and date) and, optionally, the images. This notebook logs in with a token, starts the job for</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>project 2, waits for it, downloads and unzips it under <span class="in">`data/export/`</span>, and reads the TSVs into one objects</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>table cached as Parquet. Later notebooks read the cache and never touch the node.</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>Credentials come from a git-ignored <span class="in">`.Renviron`</span> (<span class="in">`ECOTAXA_URL`</span>, <span class="in">`ECOTAXA_USER`</span>, <span class="in">`ECOTAXA_PASSWORD`</span>). When</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>no login is configured, the notebook falls back to the upstream test set in <span class="in">`data-raw/import_test/`</span>, which is</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>the byte-identical source of project 2's eight objects (see <span class="in">`data-raw/README.md`</span>), so the rest of the</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>pipeline still runs on the same data; it says so below.</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(httr2, dplyr, readr, tibble, arrow, jsonlite, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>PROJECT_ID <span class="ot">&lt;-</span> <span class="dv">2</span>L</span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## The node, as anyone can see it</span></span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>The project list, the instruments and the per-project taxonomy statistics are readable without a login on</span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>this node; object data are not.</span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: public</span></span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>projects <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>()</span>
-<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>projects <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url, objcount, pctvalidated, pctclassified)</span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_taxo_stats</span>(PROJECT_ID)</span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(stats)</span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a><span class="fu">## Export</span></span>
-<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: export</span></span>
-<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">ecotaxa_has_login</span>()) {</span>
-<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>  token <span class="ot">&lt;-</span> <span class="fu">ecotaxa_login</span>()</span>
-<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">ecotaxa_export</span>(PROJECT_ID, DIR_EXPORT, <span class="at">token =</span> token, <span class="at">with_images =</span> <span class="st">"first"</span>)</span>
-<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"EcoTaxa API general export"</span></span>
-<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.tsv$"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"</span></span>
-<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"objects come from:"</span>, source_of_objects, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a><span class="fu">basename</span>(tsv_paths)</span>
-<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: read</span></span>
-<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>objects <span class="ot">&lt;-</span> <span class="fu">read_ecotaxa_export</span>(tsv_paths)</span>
-<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">nrow</span>(objects), <span class="st">"objects,"</span>, <span class="fu">n_distinct</span>(objects<span class="sc">$</span>sample_id), <span class="st">"samples,"</span>,</span>
-<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">n_distinct</span>(objects<span class="sc">$</span>acq_id), <span class="st">"acquisitions,"</span>, <span class="fu">ncol</span>(objects), <span class="st">"columns</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span></span>
-<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(sample_id, acq_id, object_annotation_status, object_annotation_category, object_annotation_category_id)</span>
-<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-80"><a href="#cb14-80" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cache</span></span>
-<span id="cb14-81"><a href="#cb14-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb14-85"><a href="#cb14-85" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: cache</span></span>
-<span id="cb14-86"><a href="#cb14-86" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(objects, <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"objects.parquet"</span>))</span>
-<span id="cb14-87"><a href="#cb14-87" aria-hidden="true" tabindex="-1"></a><span class="fu">writeLines</span>(<span class="fu">toJSON</span>(<span class="fu">list</span>(<span class="at">project_id =</span> PROJECT_ID, <span class="at">source =</span> source_of_objects, <span class="at">tsv =</span> <span class="fu">basename</span>(tsv_paths),</span>
-<span id="cb14-88"><a href="#cb14-88" aria-hidden="true" tabindex="-1"></a>                       <span class="at">n_objects =</span> <span class="fu">nrow</span>(objects), <span class="at">exported_utc =</span> <span class="fu">format</span>(<span class="fu">Sys.time</span>(), <span class="st">"%Y-%m-%dT%H:%M:%SZ"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>),</span>
-<span id="cb14-89"><a href="#cb14-89" aria-hidden="true" tabindex="-1"></a>                       <span class="at">image_dir =</span> <span class="cf">if</span> (<span class="fu">ecotaxa_has_login</span>()) DIR_EXPORT <span class="cf">else</span> <span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>)),</span>
-<span id="cb14-90"><a href="#cb14-90" aria-hidden="true" tabindex="-1"></a>                  <span class="at">auto_unbox =</span> <span class="cn">TRUE</span>, <span class="at">pretty =</span> <span class="cn">TRUE</span>), <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>))</span>
-<span id="cb14-91"><a href="#cb14-91" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb14-92"><a href="#cb14-92" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-93"><a href="#cb14-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-94"><a href="#cb14-94" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notes</span></span>
-<span id="cb14-95"><a href="#cb14-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-96"><a href="#cb14-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The export carries <span class="in">`object_annotation_category_id`</span>, the node's internal taxonomy id, which notebook 02 resolves.</span>
-<span id="cb14-97"><a href="#cb14-97" aria-hidden="true" tabindex="-1"></a>  It carries no AphiaID.</span>
-<span id="cb14-98"><a href="#cb14-98" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A login token from <span class="in">`POST /api/login`</span> is a JWT; the API also offers <span class="in">`/token`</span> with a refresh token, which a</span>
-<span id="cb14-99"><a href="#cb14-99" aria-hidden="true" tabindex="-1"></a>  scheduled pipeline should prefer.</span>
-<span id="cb14-100"><a href="#cb14-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`with_images = "first"`</span> ships the visible image per object; <span class="in">`"all"`</span> can produce several TSV lines per object.</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "01 Export a project from EcoTaxa"</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "REST API, token login, general export job, cached locally"</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="in">```{mermaid}</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>%%| file: diagrams/obis.mmd</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="fu">## What this does</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>EcoTaxa's REST API (<span class="in">`{ECOTAXA_URL}/api/docs`</span>) exposes a **general export** job: it writes a zip with one TSV</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>per sample (object, sample, acquisition and process fields, plus each object's category, annotation status,</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>annotator and date) and, optionally, the images. This notebook logs in with a token, starts the job for</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>the project, waits for it, downloads and unzips it under <span class="in">`data/export/`</span>, and reads the TSVs into one objects</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>table cached as Parquet. Later notebooks read the cache and never touch the node.</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>The project is <span class="in">`ECOTAXA_PROJECT_ID`</span> (default 2, the demo project; the setup below prints which one this</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>page ran on). Credentials come from a git-ignored <span class="in">`.Renviron`</span> (<span class="in">`ECOTAXA_URL`</span>, <span class="in">`ECOTAXA_USER`</span>,</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="in">`ECOTAXA_PASSWORD`</span>) or from <span class="in">`ECOTAXA_TOKEN`</span>, a login token handed to the render so no password sits on the</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>machine. An export already unzipped under <span class="in">`data/export/`</span> is reused unless <span class="in">`ECOTAXA_REFRESH=1`</span>. When</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>no login is configured on project 2, the notebook falls back to the upstream test set in <span class="in">`data-raw/import_test/`</span>, which is</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>the byte-identical source of project 2's eight objects (see <span class="in">`data-raw/README.md`</span>), so the rest of the</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>pipeline still runs on the same data; it says so below.</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>librarian<span class="sc">::</span><span class="fu">shelf</span>(httr2, dplyr, readr, tibble, arrow, jsonlite, here, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (f <span class="cf">in</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"R"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)) <span class="fu">source</span>(f)</span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a>PROJECT_ID <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_id</span>()</span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"project"</span>, PROJECT_ID, <span class="st">"on"</span>, <span class="fu">ecotaxa_url</span>(), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>DIR_EXPORT <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data/export"</span>, <span class="fu">paste0</span>(<span class="st">"project-"</span>, PROJECT_ID))</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a><span class="fu">## The node, as anyone can see it</span></span>
+<span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a>The project list, the instruments and the per-project taxonomy statistics are readable without a login on</span>
+<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a>this node; object data are not.</span>
+<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: public</span></span>
+<span id="cb17-49"><a href="#cb17-49" aria-hidden="true" tabindex="-1"></a>projects <span class="ot">&lt;-</span> <span class="fu">ecotaxa_projects</span>()</span>
+<span id="cb17-50"><a href="#cb17-50" aria-hidden="true" tabindex="-1"></a>projects <span class="sc">|&gt;</span> <span class="fu">select</span>(projid, title, instrument, instrument_url, objcount, pctvalidated, pctclassified)</span>
+<span id="cb17-51"><a href="#cb17-51" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">&lt;-</span> <span class="fu">ecotaxa_project_taxo_stats</span>(PROJECT_ID)</span>
+<span id="cb17-52"><a href="#cb17-52" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(stats)</span>
+<span id="cb17-53"><a href="#cb17-53" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-54"><a href="#cb17-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-55"><a href="#cb17-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Export</span></span>
+<span id="cb17-56"><a href="#cb17-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-59"><a href="#cb17-59" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-60"><a href="#cb17-60" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: export</span></span>
+<span id="cb17-61"><a href="#cb17-61" aria-hidden="true" tabindex="-1"></a>prior <span class="ot">&lt;-</span> <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>)</span>
+<span id="cb17-62"><a href="#cb17-62" aria-hidden="true" tabindex="-1"></a>reuse <span class="ot">&lt;-</span> <span class="fu">file.exists</span>(prior) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">identical</span>(<span class="fu">Sys.getenv</span>(<span class="st">"ECOTAXA_REFRESH"</span>), <span class="st">"1"</span>) <span class="sc">&amp;&amp;</span></span>
+<span id="cb17-63"><a href="#cb17-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">grepl</span>(<span class="st">"^EcoTaxa API"</span>, <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>source) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(<span class="fu">ecotaxa_export_tsvs</span>(DIR_EXPORT)) <span class="sc">&gt;</span> <span class="dv">0</span></span>
+<span id="cb17-64"><a href="#cb17-64" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (reuse) {</span>
+<span id="cb17-65"><a href="#cb17-65" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">ecotaxa_export_tsvs</span>(DIR_EXPORT)</span>
+<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>source</span>
+<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"reusing the export of"</span>, <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>exported_utc, <span class="st">"(set ECOTAXA_REFRESH=1 to export again)</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">ecotaxa_has_login</span>()) {</span>
+<span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a>  token <span class="ot">&lt;-</span> <span class="fu">ecotaxa_login</span>()</span>
+<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a>  <span class="co"># a project of a million objects with images takes the node well over the default ten minutes</span></span>
+<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">ecotaxa_export</span>(PROJECT_ID, DIR_EXPORT, <span class="at">token =</span> token, <span class="at">with_images =</span> <span class="st">"first"</span>, <span class="at">timeout_s =</span> <span class="dv">6</span> <span class="sc">*</span> <span class="dv">3600</span>)</span>
+<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"EcoTaxa API general export"</span></span>
+<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="st">"without a login only project 2 has a local fallback"</span> <span class="ot">=</span> PROJECT_ID <span class="sc">==</span> <span class="dv">2</span>L)</span>
+<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a>  tsv_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>), <span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.tsv$"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-76"><a href="#cb17-76" aria-hidden="true" tabindex="-1"></a>  source_of_objects <span class="ot">&lt;-</span> <span class="st">"data-raw/import_test (upstream test set; no ECOTAXA_USER/ECOTAXA_PASSWORD in this session)"</span></span>
+<span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"objects come from:"</span>, source_of_objects, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(tsv_paths), <span class="st">"TSV files:"</span>, <span class="fu">head</span>(<span class="fu">basename</span>(tsv_paths), <span class="dv">5</span>), <span class="cf">if</span> (<span class="fu">length</span>(tsv_paths) <span class="sc">&gt;</span> <span class="dv">5</span>) <span class="st">"..."</span>, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: read</span></span>
+<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>objects <span class="ot">&lt;-</span> <span class="fu">read_ecotaxa_export</span>(tsv_paths)</span>
+<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a><span class="co"># a general export without internal ids has the category's display name but not its id: resolve the</span></span>
+<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a><span class="co"># id from the project's own categories, where each display name is unique</span></span>
+<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="st">"object_annotation_category_id"</span> <span class="sc">%in%</span> <span class="fu">names</span>(objects)) {</span>
+<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a>  cats <span class="ot">&lt;-</span> <span class="fu">ecotaxa_taxa</span>(stats<span class="sc">$</span>used_taxa)</span>
+<span id="cb17-91"><a href="#cb17-91" aria-hidden="true" tabindex="-1"></a>  objects<span class="sc">$</span>object_annotation_category_id <span class="ot">&lt;-</span> <span class="fu">ecotaxa_category_ids</span>(objects<span class="sc">$</span>object_annotation_category, cats)</span>
+<span id="cb17-92"><a href="#cb17-92" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"category ids resolved from"</span>, <span class="fu">nrow</span>(cats), <span class="st">"project categories</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-94"><a href="#cb17-94" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">nrow</span>(objects), <span class="st">"objects,"</span>, <span class="fu">n_distinct</span>(objects<span class="sc">$</span>sample_id), <span class="st">"samples,"</span>,</span>
+<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a>    <span class="fu">n_distinct</span>(objects<span class="sc">$</span>acq_id), <span class="st">"acquisitions,"</span>, <span class="fu">ncol</span>(objects), <span class="st">"columns</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span> <span class="fu">count</span>(object_annotation_status)</span>
+<span id="cb17-97"><a href="#cb17-97" aria-hidden="true" tabindex="-1"></a><span class="co"># the most common categories (the whole table for a small project)</span></span>
+<span id="cb17-98"><a href="#cb17-98" aria-hidden="true" tabindex="-1"></a>objects <span class="sc">|&gt;</span></span>
+<span id="cb17-99"><a href="#cb17-99" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(object_annotation_category, object_annotation_category_id, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">25</span>)</span>
+<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a><span class="fu">## Cache</span></span>
+<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-107"><a href="#cb17-107" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: cache</span></span>
+<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a><span class="fu">write_parquet</span>(objects, <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"objects.parquet"</span>))</span>
+<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a>from_api <span class="ot">&lt;-</span> <span class="fu">grepl</span>(<span class="st">"^EcoTaxa API"</span>, source_of_objects)</span>
+<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a>exported <span class="ot">&lt;-</span> <span class="cf">if</span> (reuse) <span class="fu">fromJSON</span>(prior)<span class="sc">$</span>exported_utc <span class="cf">else</span> <span class="fu">format</span>(<span class="fu">Sys.time</span>(), <span class="st">"%Y-%m-%dT%H:%M:%SZ"</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>)</span>
+<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a><span class="fu">writeLines</span>(<span class="fu">toJSON</span>(<span class="fu">list</span>(<span class="at">project_id =</span> PROJECT_ID, <span class="at">source =</span> source_of_objects, <span class="at">tsv =</span> <span class="fu">basename</span>(tsv_paths),</span>
+<span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a>                       <span class="at">n_objects =</span> <span class="fu">nrow</span>(objects), <span class="at">exported_utc =</span> exported,</span>
+<span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a>                       <span class="at">image_dir =</span> <span class="cf">if</span> (from_api) DIR_EXPORT <span class="cf">else</span> <span class="fu">here</span>(<span class="st">"data-raw/import_test"</span>)),</span>
+<span id="cb17-115"><a href="#cb17-115" aria-hidden="true" tabindex="-1"></a>                  <span class="at">auto_unbox =</span> <span class="cn">TRUE</span>, <span class="at">pretty =</span> <span class="cn">TRUE</span>), <span class="fu">file.path</span>(DIR_EXPORT, <span class="st">"export.json"</span>))</span>
+<span id="cb17-116"><a href="#cb17-116" aria-hidden="true" tabindex="-1"></a>files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(DIR_EXPORT, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb17-117"><a href="#cb17-117" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">length</span>(files), <span class="st">"files;"</span>, <span class="fu">sum</span>(<span class="fu">grepl</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">.(jpg|jpeg|png)$"</span>, files, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>)), <span class="st">"images</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb17-118"><a href="#cb17-118" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-119"><a href="#cb17-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-120"><a href="#cb17-120" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notes</span></span>
+<span id="cb17-121"><a href="#cb17-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-122"><a href="#cb17-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The export carries <span class="in">`object_annotation_category_id`</span>, the node's internal taxonomy id, which notebook 02 resolves.</span>
+<span id="cb17-123"><a href="#cb17-123" aria-hidden="true" tabindex="-1"></a>  It carries no AphiaID.</span>
+<span id="cb17-124"><a href="#cb17-124" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>A login token from <span class="in">`POST /api/login`</span> is a JWT; the API also offers <span class="in">`/token`</span> with a refresh token, which a</span>
+<span id="cb17-125"><a href="#cb17-125" aria-hidden="true" tabindex="-1"></a>  scheduled pipeline should prefer.</span>
+<span id="cb17-126"><a href="#cb17-126" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`with_images = "first"`</span> ships the visible image per object; <span class="in">`"all"`</span> can produce several TSV lines per object.</span>
+<span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-128"><a href="#cb17-128" aria-hidden="true" tabindex="-1"></a><span class="fu">## Lessons learned (project 4, 2026-11-10)</span></span>
+<span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a>The first real export, of 967,734 objects, found five things the eight-object demo could not. Each is now</span>
+<span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a>handled in <span class="in">`R/ecotaxa_api.R`</span> or <span class="in">`R/taxa.R`</span>, with a test:</span>
+<span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-133"><a href="#cb17-133" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> What happened <span class="pp">|</span> Cause <span class="pp">|</span> Now <span class="pp">|</span></span>
+<span id="cb17-134"><a href="#cb17-134" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb17-135"><a href="#cb17-135" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`422 Unprocessable Entity`</span> on starting the job <span class="pp">|</span> <span class="in">`split_by = ""`</span> is not in the node's enum (<span class="in">`sample`</span>, <span class="in">`acquisition`</span>, <span class="in">`taxon`</span>, <span class="in">`none`</span>) <span class="pp">|</span> <span class="in">`ecotaxa_export_body()`</span> checks against the OpenAPI enums <span class="pp">|</span></span>
+<span id="cb17-136"><a href="#cb17-136" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`500`</span>, <span class="in">`relation "taxo_recast" does not exist`</span> <span class="pp">|</span> the node's DB was built without two tables (a node issue, not a pipeline one) <span class="pp">|</span> fixed on the node; see <span class="co">[</span><span class="ot">05 Migrate</span><span class="co">](05_migrate_from-ifremer.qmd)</span> <span class="pp">|</span></span>
+<span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> the job sat at "1 % Start TSV export" forever <span class="pp">|</span> the back end was OOM-killed (2.44 GB container) loading every row at once; the job row is never updated after that <span class="pp">|</span> one job per batch of samples, at most <span class="in">`max_objects`</span> (40,000) each; a job whose progress stalls for 20 min stops the run <span class="pp">|</span></span>
+<span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`object_annotation_category_id`</span> missing <span class="pp">|</span> the export carries internal ids only with <span class="in">`with_internal_ids`</span> <span class="pp">|</span> the id is resolved from the category's display name (unique on a node) against the project's own categories; no match stops <span class="pp">|</span></span>
+<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> every date blank downstream <span class="pp">|</span> the export writes <span class="in">`YYYY-MM-DD`</span> and <span class="in">`HH:MM:SS`</span>, the import format is <span class="in">`YYYYMMDD`</span> and <span class="in">`HHMMSS`</span> <span class="pp">|</span> <span class="in">`ecotaxa_datetime()`</span> reads both <span class="pp">|</span></span>
+<span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a>Also: download with a long timeout and unzip with the system <span class="in">`unzip`</span> (zip64, over 4 GB); batches leave a</span>
+<span id="cb17-142"><a href="#cb17-142" aria-hidden="true" tabindex="-1"></a>marker under <span class="in">`data/export/project-&lt;id&gt;/batches/`</span>, so a stopped run resumes after the last finished batch;</span>
+<span id="cb17-143"><a href="#cb17-143" aria-hidden="true" tabindex="-1"></a>each finished job is deleted on the node so its files do not fill the node's disk. For project 4 the 28</span>
+<span id="cb17-144"><a href="#cb17-144" aria-hidden="true" tabindex="-1"></a>batches took 44 minutes and gave 105 TSVs and exactly one image per object (967,734), which also removed the</span>
+<span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a>6,962 byte-identical second images the backup carried.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
