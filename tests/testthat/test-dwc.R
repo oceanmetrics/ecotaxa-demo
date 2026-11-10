@@ -90,3 +90,8 @@ test_that("dwc_emof() mean ESD pools every category of an occurrence and only it
   expect_equal(esd$measurementValue[esd$occurrenceID == "p2:s1:a2:1101:predicted"], "30")
   expect_equal(nrow(esd), nrow(oc))
 })
+test_that("ecotaxa_datetime() reads the general export's YYYY-MM-DD and HH:MM:SS too (regression: project 4 export)", {
+  expect_equal(ecotaxa_datetime("2021-09-14", "13:05:00"), "2021-09-14T13:05:00Z")
+  expect_equal(ecotaxa_datetime("2021-09-14", NA), "2021-09-14")
+  expect_equal(ecotaxa_datetime("20210914", "130500"), "2021-09-14T13:05:00Z")
+})

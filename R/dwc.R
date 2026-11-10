@@ -24,9 +24,10 @@ dwc_term_map <- function(cols) {
   out
 }
 
-# ISO 8601 UTC from EcoTaxa's object_date (YYYYMMDD) and object_time (HHMMSS)
+# ISO 8601 UTC from EcoTaxa's object_date and object_time: YYYYMMDD and HHMMSS in an import file,
+# YYYY-MM-DD and HH:MM:SS in a general export (format_dates_times), both accepted
 ecotaxa_datetime <- function(date, time) {
-  d <- as.character(date); t <- as.character(time)
+  d <- gsub("-", "", as.character(date)); t <- gsub(":", "", as.character(time))
   ok <- !is.na(d) & grepl("^\\d{8}$", d)
   tt <- ifelse(!is.na(t) & grepl("^\\d{6}$", t), t, NA)
   out <- rep(NA_character_, length(d))

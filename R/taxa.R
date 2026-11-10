@@ -132,3 +132,18 @@ assert_taxa_resolved <- function(objects, lookup) {
                           paste(unres, collapse = ", "), call. = FALSE)
   invisible(TRUE)
 }
+
+# EcoTaxa's category id for each object, from the exported display name. a general export made
+# without internal ids carries object_annotation_category (the taxon's display_name, unique on a
+# node) but no object_annotation_category_id. taxa is the node's taxonomy for the project's used
+# categories (ecotaxa_taxa()). a name with no match, or with two, stops: never a guess.
+ecotaxa_category_ids <- function(display_name, taxa) {
+  stopifnot(all(c("ecotaxa_id", "display_name") %in% names(taxa)))
+  dup <- unique(taxa$display_name[duplicated(taxa$display_name)])
+  if (length(dup)) stop("display names shared by two categories: ", paste(dup, collapse = ", "), call. = FALSE)
+  id <- taxa$ecotaxa_id[match(display_name, taxa$display_name)]
+  miss <- unique(display_name[!is.na(display_name) & is.na(id)])
+  if (length(miss)) stop("exported categories not among the project's categories: ",
+                         paste(miss, collapse = ", "), call. = FALSE)
+  as.integer(id)
+}

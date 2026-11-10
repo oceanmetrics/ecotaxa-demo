@@ -74,6 +74,13 @@ cat(length(tsv_paths), "TSV files:", head(basename(tsv_paths), 5), if (length(ts
 ```{r}
 #| label: read
 objects <- read_ecotaxa_export(tsv_paths)
+# a general export without internal ids has the category's display name but not its id: resolve the
+# id from the project's own categories, where each display name is unique
+if (!"object_annotation_category_id" %in% names(objects)) {
+  cats <- ecotaxa_taxa(stats$used_taxa)
+  objects$object_annotation_category_id <- ecotaxa_category_ids(objects$object_annotation_category, cats)
+  cat("category ids resolved from", nrow(cats), "project categories\n")
+}
 cat(nrow(objects), "objects,", n_distinct(objects$sample_id), "samples,",
     n_distinct(objects$acq_id), "acquisitions,", ncol(objects), "columns\n")
 objects |> count(object_annotation_status)
