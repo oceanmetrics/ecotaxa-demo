@@ -112,3 +112,22 @@ cat(length(files), "files;", sum(grepl("\\.(jpg|jpeg|png)$", files, ignore.case 
 - A login token from `POST /api/login` is a JWT; the API also offers `/token` with a refresh token, which a
   scheduled pipeline should prefer.
 - `with_images = "first"` ships the visible image per object; `"all"` can produce several TSV lines per object.
+
+## Lessons learned (project 4, 2026-11-10)
+
+The first real export, of 967,734 objects, found five things the eight-object demo could not. Each is now
+handled in `R/ecotaxa_api.R` or `R/taxa.R`, with a test:
+
+| What happened | Cause | Now |
+|---|---|---|
+| `422 Unprocessable Entity` on starting the job | `split_by = ""` is not in the node's enum (`sample`, `acquisition`, `taxon`, `none`) | `ecotaxa_export_body()` checks against the OpenAPI enums |
+| `500`, `relation "taxo_recast" does not exist` | the node's DB was built without two tables (a node issue, not a pipeline one) | fixed on the node; see [05 Migrate](05_migrate_from-ifremer.qmd) |
+| the job sat at "1 % Start TSV export" forever | the back end was OOM-killed (2.44 GB container) loading every row at once; the job row is never updated after that | one job per batch of samples, at most `max_objects` (40,000) each; a job whose progress stalls for 20 min stops the run |
+| `object_annotation_category_id` missing | the export carries internal ids only with `with_internal_ids` | the id is resolved from the category's display name (unique on a node) against the project's own categories; no match stops |
+| every date blank downstream | the export writes `YYYY-MM-DD` and `HH:MM:SS`, the import format is `YYYYMMDD` and `HHMMSS` | `ecotaxa_datetime()` reads both |
+
+Also: download with a long timeout and unzip with the system `unzip` (zip64, over 4 GB); batches leave a
+marker under `data/export/project-<id>/batches/`, so a stopped run resumes after the last finished batch;
+each finished job is deleted on the node so its files do not fill the node's disk. For project 4 the 28
+batches took 44 minutes and gave 105 TSVs and exactly one image per object (967,734), which also removed the
+6,962 byte-identical second images the backup carried.

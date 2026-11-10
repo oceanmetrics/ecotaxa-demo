@@ -95,3 +95,15 @@ stopifnot(identical(v$finding, "ok"))
 3. On accession, write the accession number and DOI back into the project's EML, so the next DwC-A version
    cites the archived copy.
 4. A re-validation or a new cruise makes a **new version**; a submitted version is never edited.
+
+## Lessons learned (project 4, 2026-11-10)
+
+- **Scale.** Project 4's bag is 11 GB, 967,734 images and 967,842 payload files. Two loops that were fine on
+  eight objects were not: copying one image per call (now one vectorized `file.copy`), and `ncei_verify()`
+  looking each manifest entry up by name inside a loop, which is quadratic and ran for over half an hour
+  without finishing (now one vectorized comparison; a test covers missing, unlisted and changed files together).
+- **Spotlight** on macOS indexes every new image and competes for the CPU; `data/.metadata_never_index` (made
+  by `scripts/render_project.sh`) keeps it off.
+- **One image per object**: exporting with `with_images = "first"` is what removed the duplicate second images
+  of the Ifremer backup; an `"all"` export would bring them back into the bag.
+- Print counts and the first lines, never a million-line listing, into a rendered page.

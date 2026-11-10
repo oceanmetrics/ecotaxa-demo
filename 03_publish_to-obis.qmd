@@ -110,3 +110,20 @@ cat(readLines(a$manifest), sep = "\n")
    IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF
    through OBIS-USA.
 3. Compare with EcoTaxa's own `collections/export/darwin_core` output for the same project as a cross-check.
+
+## Lessons learned (project 4, 2026-11-10)
+
+- **Positions of 0,0** are the usual placeholder for "unknown" (project 4's `ws21093_MR_64um`): `dwc_event()`
+  now publishes them as no coordinates, the same rule as the [sample map](map_project-4.qmd). A latitude or a
+  longitude of 0 alone is kept.
+- **Validated only** by default: `INCLUDE_PREDICTED` turns on only when a project has no validated object (the
+  demo); project 4's 951,833 predictions stay out.
+- **Column names differ by instrument.** The eMoF reads `sample_tot_vol` (Zooscan) and `object_esd`; a
+  PlanktoScope export has `sample_total_volume`, `sample_concentrated_sample_volume`,
+  `sample_dilution_factor` and `object_equivalent_diameter` (pixels, with `process_pixel`). Volume,
+  concentration and size are therefore absent for project 4 until the owner confirms units and meaning; the
+  mapping belongs in `metadata/`, not guessed in code.
+- **Child events have no coordinates**: occurrences on acquisition events (738 for project 4) carry the
+  `no_coordinates` warning; OBIS is expected to take them from the parent sample event, to confirm.
+- **Metadata per project** comes from `metadata/projects.csv`; a project without a row stops the build rather
+  than borrowing the demo's text or license.

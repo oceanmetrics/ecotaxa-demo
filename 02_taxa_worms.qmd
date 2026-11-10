@@ -106,3 +106,15 @@ lookup |> count(decision)
 `metadata/taxa_lookup_project-<id>.csv` is committed: it is the artifact a taxonomist reviews and the one notebook 03 reads.
 An `unresolved` row stops notebook 03 until someone edits the CSV (set `decision` and `aphia_id` by hand) or
 fixes the category on the node.
+
+## Lessons learned (project 4, 2026-11-10)
+
+- 73 categories in use: 48 resolve directly to an AphiaID, 10 to their nearest WoRMS ancestor, 15 are excluded,
+  none unresolved. The `ancestor` rows are the ones a taxonomist should read first (for project 4,
+  `tintinnida` to Tintinnidae, `centric` to Bacillariophyta, `ciliate-tintinnids` to Ciliophora).
+- Exclusions decide most of what reaches OBIS: of 15,788 validated objects, 11,927 sit in excluded categories
+  (`rods<other` 4,082, `artefact` 3,043, `ghost`, `dubious`, `detritus`, `unidentified cells`), so only 3,861
+  become occurrences. A morphological category like `rods<other` is a question for the data owner, not a rule
+  to change silently.
+- Keep one lookup per project (`metadata/taxa_lookup_project-<id>.csv`): the same category can be reviewed
+  differently for two instruments.
