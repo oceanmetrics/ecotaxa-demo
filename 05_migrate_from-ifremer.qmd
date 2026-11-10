@@ -1,6 +1,8 @@
 ---
 title: "05 Migrate a project from another EcoTaxa node"
 subtitle: "Backup zip → node import → node checks → notebooks 01–04, as done for project 4"
+# knitr, as for the other notebooks: with only bash chunks quarto would otherwise pick jupyter
+engine: knitr
 execute:
   eval: false
 ---
