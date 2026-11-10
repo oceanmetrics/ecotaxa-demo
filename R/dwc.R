@@ -66,6 +66,11 @@ dwc_event <- function(objects, prefix, instrument_url = NA_character_) {
       samplingProtocol = .one(paste0(instrument, ifelse(is.na(gear), "", paste0("; ", gear)))),
       sampleSizeValue = .one(tot_vol), .groups = "drop") |>
     dplyr::mutate(
+      # latitude and longitude both exactly 0 is the placeholder for an unknown position (as on the
+      # sample map, split_mappable_samples()): published as no coordinates, never as a point at 0,0
+      null_island = !is.na(decimalLatitude) & !is.na(decimalLongitude) & decimalLatitude == 0 & decimalLongitude == 0,
+      decimalLatitude  = ifelse(null_island, NA_real_, decimalLatitude),
+      decimalLongitude = ifelse(null_island, NA_real_, decimalLongitude),
       minimumDepthInMeters = ifelse(is.finite(minimumDepthInMeters), minimumDepthInMeters, NA),
       maximumDepthInMeters = ifelse(is.finite(maximumDepthInMeters), maximumDepthInMeters, NA),
       sampleSizeUnit = ifelse(is.na(sampleSizeValue), NA_character_, "m3"))

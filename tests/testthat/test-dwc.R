@@ -95,3 +95,13 @@ test_that("ecotaxa_datetime() reads the general export's YYYY-MM-DD and HH:MM:SS
   expect_equal(ecotaxa_datetime("2021-09-14", NA), "2021-09-14")
   expect_equal(ecotaxa_datetime("20210914", "130500"), "2021-09-14T13:05:00Z")
 })
+test_that("dwc_event() publishes a 0,0 sample without coordinates, but keeps a real 0 latitude (regression: project 4 ws21093_MR_64um)", {
+  o <- fixture_objects()
+  o$object_lat[o$sample_id == "s2"] <- 0; o$object_lon[o$sample_id == "s2"] <- 0
+  ev <- dwc_event(o, "p2")
+  s2 <- ev[ev$eventID == "p2:s2", ]
+  expect_true(is.na(s2$decimalLatitude)); expect_true(is.na(s2$decimalLongitude))
+  expect_false("null_island" %in% names(ev))
+  o$object_lon[o$sample_id == "s2"] <- -80
+  expect_equal(dwc_event(o, "p2")$decimalLatitude[dwc_event(o, "p2")$eventID == "p2:s2"], 0)
+})
