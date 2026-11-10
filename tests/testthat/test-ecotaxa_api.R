@@ -52,3 +52,15 @@ test_that("ecotaxa_export_body() sends values the node's GeneralExportReq accept
   expect_error(ecotaxa_export_body(4, split_by = ""))
   expect_error(ecotaxa_export_body(4, with_images = "yes"))
 })
+test_that("ecotaxa_sample_batches() caps objects per batch, keeps order, and sends an oversized sample alone", {
+  b <- ecotaxa_sample_batches(c(11, 12, 13, 14, 15), c(10, 20, 15, 50, 5), max_objects = 30)
+  expect_equal(b, list(c(11, 12), 13, 14, 15))
+  expect_equal(unlist(b), c(11, 12, 13, 14, 15))
+  expect_equal(ecotaxa_sample_batches(1:3, c(1, 1, 1), 100), list(1:3))
+  expect_error(ecotaxa_sample_batches(1:2, c(1, NA)))
+})
+test_that("ecotaxa_export_body(samples =) fills the samples filter as comma-separated ids (no scientific notation)", {
+  b <- ecotaxa_export_body(4, samples = c(400000123, 400000124))
+  expect_equal(b$filters$samples, "400000123,400000124")
+  expect_equal(as.character(jsonlite::toJSON(ecotaxa_export_body(4)$filters)), "{}")
+})
