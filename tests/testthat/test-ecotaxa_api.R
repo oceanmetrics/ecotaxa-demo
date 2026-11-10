@@ -30,3 +30,16 @@ test_that("parse_wormsification() recovers EcoTaxa's own mapping: phylo to itsel
   expect_equal(m$maps_to_name[m$ecotaxa_id == 85078], "Biota")      # egg<other lands on Biota
   expect_true(is.na(m$maps_to_id[m$ecotaxa_id == 84963]))             # detritus: no solution
 })
+test_that("ecotaxa_project_id() reads ECOTAXA_PROJECT_ID, defaults to 2 and refuses junk", {
+  withr::with_envvar(c(ECOTAXA_PROJECT_ID = NA), expect_equal(ecotaxa_project_id(), 2L))
+  withr::with_envvar(c(ECOTAXA_PROJECT_ID = "4"), expect_equal(ecotaxa_project_id(), 4L))
+  withr::with_envvar(c(ECOTAXA_PROJECT_ID = "four"), expect_error(ecotaxa_project_id(), "whole number"))
+})
+test_that("a token alone counts as a login and is returned without calling the node", {
+  withr::with_envvar(c(ECOTAXA_TOKEN = "abc.def.ghi", ECOTAXA_USER = NA, ECOTAXA_PASSWORD = NA), {
+    expect_true(ecotaxa_has_login())
+    expect_equal(ecotaxa_login(base = "http://127.0.0.1:9"), "abc.def.ghi")
+  })
+  withr::with_envvar(c(ECOTAXA_TOKEN = NA, ECOTAXA_USER = NA, ECOTAXA_PASSWORD = NA),
+                     expect_false(ecotaxa_has_login()))
+})

@@ -3,16 +3,26 @@
 # the node's API is documented at {ECOTAXA_URL}/api/docs (OpenAPI). every call here is a
 # read, except starting an export job, which writes nothing into any project.
 # credentials come from env vars (a git-ignored .Renviron): ECOTAXA_URL, ECOTAXA_USER,
-# ECOTAXA_PASSWORD. nothing in this file prints a password.
+# ECOTAXA_PASSWORD, or ECOTAXA_TOKEN alone (a JWT from POST /api/login, handed to the
+# process so no password sits on the machine). nothing in this file prints a password or token.
 
 ecotaxa_url <- function() {
   u <- Sys.getenv("ECOTAXA_URL", "https://ecotaxa.oceanmetrics.io")
   sub("/+$", "", u)
 }
 
-# TRUE when a login is configured in the environment
+# the project the notebooks run on: ECOTAXA_PROJECT_ID, else the demo project 2
+ecotaxa_project_id <- function(default = 2L) {
+  v <- Sys.getenv("ECOTAXA_PROJECT_ID", as.character(default))
+  id <- suppressWarnings(as.integer(v))
+  stopifnot("ECOTAXA_PROJECT_ID must be a whole number" = length(id) == 1 && !is.na(id) && id > 0)
+  id
+}
+
+# TRUE when a login is configured in the environment (a token, or a user and password)
 ecotaxa_has_login <- function()
-  nzchar(Sys.getenv("ECOTAXA_USER")) && nzchar(Sys.getenv("ECOTAXA_PASSWORD"))
+  nzchar(Sys.getenv("ECOTAXA_TOKEN")) ||
+    (nzchar(Sys.getenv("ECOTAXA_USER")) && nzchar(Sys.getenv("ECOTAXA_PASSWORD")))
 
 # a bare request to {base}/api/{path}; token adds the bearer header
 ecotaxa_req <- function(path, token = NULL, base = ecotaxa_url()) {
@@ -23,10 +33,12 @@ ecotaxa_req <- function(path, token = NULL, base = ecotaxa_url()) {
   r
 }
 
-# POST /api/login returns a JWT used as a bearer token on later calls
+# POST /api/login returns a JWT used as a bearer token on later calls; a token already in
+# ECOTAXA_TOKEN is returned as is
 ecotaxa_login <- function(user = Sys.getenv("ECOTAXA_USER"),
                           password = Sys.getenv("ECOTAXA_PASSWORD"),
-                          base = ecotaxa_url()) {
+                          base = ecotaxa_url(), token = Sys.getenv("ECOTAXA_TOKEN")) {
+  if (nzchar(token)) return(invisible(token))
   stopifnot("ECOTAXA_USER and ECOTAXA_PASSWORD must be set" = nzchar(user) && nzchar(password))
   tok <- ecotaxa_req("login", base = base) |>
     httr2::req_body_json(list(username = user, password = password)) |>
@@ -119,24 +131,31 @@ ecotaxa_job_wait <- function(job_id, token, timeout_s = 600, poll_s = 3, base = 
   }
 }
 
-# download the finished job's zip to path
-ecotaxa_job_file <- function(job_id, token, path, base = ecotaxa_url()) {
+# download the finished job's zip to path. a project with images runs to gigabytes, so the
+# 120 s request timeout is lifted to timeout_s for this one call
+ecotaxa_job_file <- function(job_id, token, path, timeout_s = 6 * 3600, base = ecotaxa_url()) {
   ecotaxa_req(paste0("jobs/", job_id, "/file"), token, base) |>
+    httr2::req_timeout(timeout_s) |>
     httr2::req_perform(path = path)
   invisible(path)
 }
 
-# the whole export: login, job, wait, download, unzip into dir; returns the TSV paths
+# the whole export: login, job, wait, download, unzip into dir; returns the TSV paths.
+# the system unzip is used because R's internal one fails on zip64 archives (over 4 GB).
 ecotaxa_export <- function(project_id, dir, token = ecotaxa_login(), with_images = "first",
-                           base = ecotaxa_url()) {
+                           timeout_s = 600, base = ecotaxa_url()) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   job <- ecotaxa_export_start(project_id, token, with_images = with_images, base = base)
-  ecotaxa_job_wait(job, token, base = base)
+  ecotaxa_job_wait(job, token, timeout_s = timeout_s, poll_s = 10, base = base)
   zip <- file.path(dir, paste0("export_project-", project_id, "_job-", job, ".zip"))
   ecotaxa_job_file(job, token, zip, base = base)
-  utils::unzip(zip, exdir = dir)
-  list.files(dir, pattern = "\\.tsv$", recursive = TRUE, full.names = TRUE)
+  utils::unzip(zip, exdir = dir, unzip = "unzip")
+  ecotaxa_export_tsvs(dir)
 }
+
+# the TSVs of an export already unzipped under dir (empty when there is none)
+ecotaxa_export_tsvs <- function(dir)
+  list.files(dir, pattern = "\\.tsv$", recursive = TRUE, full.names = TRUE)
 
 # read one EcoTaxa TSV (import or export format). the optional second row holds the
 # column types ([t] text, [f] float) and is used to type the columns, then dropped.

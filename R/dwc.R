@@ -192,24 +192,27 @@ dwc_emof <- function(objects, event, occurrence, registry, prefix, instrument_ur
                                    signif(occurrence$organismQuantity[ok] / v[ok], 6))
     }
     if ("object_esd" %in% names(objects)) {
-      esd <- objects |>
-        dplyr::mutate(eventID = .object_event(objects, event, prefix),
-                      status = tolower(.col(objects, "object_annotation_status")),
-                      cat_id = as.integer(object_annotation_category_id),
-                      esd = suppressWarnings(as.numeric(object_esd)))
-      key <- occurrence |> dplyr::select(occurrenceID, eventID, identificationVerificationStatus, identificationRemarks)
-      # mean esd per occurrence through the category ids named in identificationRemarks
-      m <- lapply(seq_len(nrow(key)), function(i) {
-        ids <- as.integer(regmatches(key$identificationRemarks[i],
-                                     gregexpr("\\((\\d+)\\)", key$identificationRemarks[i]))[[1]] |>
-                            gsub(pattern = "[()]", replacement = ""))
-        x <- esd$esd[esd$eventID == key$eventID[i] & esd$status == key$identificationVerificationStatus[i] &
-                       esd$cat_id %in% ids]
-        if (all(is.na(x))) NA_real_ else mean(x, na.rm = TRUE)
-      })
-      m <- unlist(m); ok <- !is.na(m)
-      if (any(ok)) out$esd <- row(key$eventID[ok], key$occurrenceID[ok], "mean equivalent spherical diameter",
-                                  signif(m[ok], 6))
+      esd <- tibble::tibble(eventID = .object_event(objects, event, prefix),
+                            status  = tolower(.col(objects, "object_annotation_status")),
+                            cat_id  = as.integer(objects$object_annotation_category_id),
+                            esd     = suppressWarnings(as.numeric(objects$object_esd))) |>
+        dplyr::filter(!is.na(esd))
+      # mean esd per occurrence through the category ids named in identificationRemarks: one
+      # (occurrence, category) row per id, joined to the objects, so a million objects is a
+      # join and not one scan per occurrence
+      ids <- regmatches(occurrence$identificationRemarks, gregexpr("\\((\\d+)\\)", occurrence$identificationRemarks))
+      key <- tibble::tibble(occurrenceID = rep(occurrence$occurrenceID, lengths(ids)),
+                            eventID      = rep(occurrence$eventID, lengths(ids)),
+                            status       = rep(occurrence$identificationVerificationStatus, lengths(ids)),
+                            cat_id       = as.integer(gsub("[()]", "", unlist(ids))))
+      m <- key |>
+        dplyr::inner_join(esd, by = c("eventID", "status", "cat_id")) |>
+        dplyr::group_by(occurrenceID) |>
+        dplyr::summarise(esd = mean(esd), .groups = "drop")
+      m <- m[match(occurrence$occurrenceID, m$occurrenceID), ]
+      ok <- !is.na(m$esd)
+      if (any(ok)) out$esd <- row(occurrence$eventID[ok], occurrence$occurrenceID[ok],
+                                  "mean equivalent spherical diameter", signif(m$esd[ok], 6))
     }
   }
   if (!length(out)) return(NULL)

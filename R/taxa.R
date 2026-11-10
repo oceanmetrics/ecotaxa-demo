@@ -5,7 +5,7 @@
 # "other", ...) carries none. the TSV export carries the category name, id and lineage, not the
 # AphiaID, so each distinct category is resolved once through the node's taxonomy. the rules
 # below decide per category and the result is a CSV a taxonomist reviews
-# (metadata/taxa_lookup.csv). they differ from EcoTaxa's own wormsification in one place: a
+# (metadata/taxa_lookup_project-<id>.csv). they differ from EcoTaxa's own wormsification in one place: a
 # morphological category whose nearest living ancestor is only Biota is excluded here, where
 # EcoTaxa's DwC export publishes it as Biota. nothing is guessed silently: a category that
 # resolves to nothing is `unresolved`, and the OBIS notebook stops on it.
@@ -128,7 +128,7 @@ assert_taxa_resolved <- function(objects, lookup) {
   if (length(miss)) stop("categories used by the objects but absent from the lookup: ",
                          paste(miss, collapse = ", "), call. = FALSE)
   unres <- lookup$ecotaxa_name[lookup$ecotaxa_id %in% used & lookup$decision == "unresolved"]
-  if (length(unres)) stop("unresolved categories (review metadata/taxa_lookup.csv): ",
+  if (length(unres)) stop("unresolved categories (review metadata/taxa_lookup_project-<id>.csv): ",
                           paste(unres, collapse = ", "), call. = FALSE)
   invisible(TRUE)
 }

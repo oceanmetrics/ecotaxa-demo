@@ -16,14 +16,14 @@ ncei_package <- function(out_dir, dataset_key, version, tsv_paths, image_dir = N
   for (p in tsv_paths) file.copy(p, file.path(bag, "data/ecotaxa_export", basename(p)))
   n_img <- 0L
   if (!is.null(image_dir) && dir.exists(image_dir)) {
-    imgs <- list.files(image_dir, pattern = "\\.(jpg|jpeg|png|tif|tiff)$", recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
-    for (p in imgs) {
-      rel <- sub(paste0("^", normalizePath(image_dir), "/?"), "", normalizePath(p))
-      dest <- file.path(bag, "data/images", rel)
-      dir.create(dirname(dest), recursive = TRUE, showWarnings = FALSE)
-      file.copy(p, dest)
-    }
-    n_img <- length(imgs)
+    # vectorized: a project can hold a million images, so one dir.create per folder and one
+    # file.copy call, not one of each per image
+    rel  <- list.files(image_dir, pattern = "\\.(jpg|jpeg|png|tif|tiff)$", recursive = TRUE, ignore.case = TRUE)
+    dest <- file.path(bag, "data/images", rel)
+    for (d in unique(dirname(dest))) dir.create(d, recursive = TRUE, showWarnings = FALSE)
+    ok <- file.copy(file.path(image_dir, rel), dest)
+    stopifnot("some images could not be copied into the bag" = all(ok))
+    n_img <- length(rel)
   }
   if (!is.null(dwca_zip) && file.exists(dwca_zip)) file.copy(dwca_zip, file.path(bag, "data/dwca", basename(dwca_zip)))
   if (!is.null(eml_path) && file.exists(eml_path)) file.copy(eml_path, file.path(bag, "data/metadata/eml.xml"))

@@ -21,13 +21,14 @@ The upload to the OBIS-USA IPT stays a deliberate manual act by the data owner. 
 #| label: setup
 librarian::shelf(dplyr, readr, tibble, arrow, jsonlite, xml2, digest, obistools, here, quiet = TRUE)
 for (f in list.files(here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
-PROJECT_ID  <- 2L
+PROJECT_ID  <- ecotaxa_project_id()
 DATASET_KEY <- paste0("ecotaxa-om-prj", PROJECT_ID)
 VERSION     <- format(Sys.Date())
 DIR_EXPORT  <- here("data/export", paste0("project-", PROJECT_ID))
 DIR_DWCA    <- here("data/darwincore", DATASET_KEY)
 objects <- read_parquet(file.path(DIR_EXPORT, "objects.parquet"))
-lookup  <- read_taxa_lookup(here("metadata/taxa_lookup.csv"))
+lookup  <- read_taxa_lookup(here("metadata", paste0("taxa_lookup_project-", PROJECT_ID, ".csv")))
+meta    <- read_project_meta(here("metadata/projects.csv"), PROJECT_ID)
 reg     <- read_measurement_registry(here("metadata/measurement_type.csv"))
 project <- ecotaxa_projects() |> filter(projid == PROJECT_ID)
 project |> select(projid, title, instrument, instrument_url)
@@ -53,10 +54,16 @@ INCLUDE_PREDICTED
 event      <- dwc_event(objects, DATASET_KEY)
 occurrence <- dwc_occurrence(objects, event, lookup, DATASET_KEY, include_predicted = INCLUDE_PREDICTED)
 emof       <- dwc_emof(objects, event, occurrence, reg, DATASET_KEY, instrument_url = project$instrument_url)
-event
+c(event = nrow(event), occurrence = nrow(occurrence), emof = nrow(emof))
+# the first rows of each (all of them for a small project)
+head(event, 15)
 occurrence |> select(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,
-                     identificationVerificationStatus, identificationRemarks)
-emof |> select(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID)
+                     identificationVerificationStatus, identificationRemarks) |> head(15)
+emof |> select(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID) |> head(15)
+# the most frequent taxa by objects
+occurrence |> group_by(scientificName, taxonRank) |>
+  summarise(events = n_distinct(eventID), objects = sum(organismQuantity), .groups = "drop") |>
+  arrange(desc(objects)) |> head(20)
 ```
 
 ## Checks
@@ -75,13 +82,10 @@ obistools::check_eventids(event)   |> as_tibble()
 
 ```{r}
 #| label: eml
-eml <- build_eml(as.list(project), event, occurrence, meta = list(
-  abstract = paste("Demonstration export of EcoTaxa project", PROJECT_ID, "(", project$title, ") on the",
-                   "Ocean Metrics demo node, resolved to WoRMS and aggregated per sample and taxon.",
-                   "Eight test objects from the upstream EcoTaxa test set; classifier predictions only."),
-  license = "CC BY 4.0 (demo; the project's own license applies in production)",
-  contact_name = "Ben Best", contact_email = "ben@oceanmetrics.io", organization = "Ocean Metrics",
-  instrument = project$instrument))
+# every text comes from metadata/projects.csv (one row per project), never from another project's row
+eml <- build_eml(as.list(project), event, occurrence, meta = c(
+  meta[c("abstract", "license", "contact_name", "contact_email", "organization")],
+  list(instrument = project$instrument)))
 eml_check(eml)
 stopifnot(!any(eml_check(eml)$level == "error"))
 dir.create(DIR_DWCA, recursive = TRUE, showWarnings = FALSE)
@@ -101,7 +105,7 @@ cat(readLines(a$manifest), sep = "\n")
 
 ## Next, by a person
 
-1. Review `metadata/taxa_lookup.csv` and the `predicted_included` finding above.
+1. Review `metadata/taxa_lookup_project-<id>.csv` and the `predicted_included` finding above.
 2. Upload `r basename(a$zip)` to the OBIS-USA IPT as a new resource (or a new version of one) and record the
    IPT resource id and the OBIS dataset id in the manifest; OBIS harvests the IPT and the record reaches GBIF
    through OBIS-USA.

@@ -20,13 +20,15 @@ is an NCEI decision, and nothing here submits.
 #| label: setup
 librarian::shelf(dplyr, readr, tibble, jsonlite, digest, here, quiet = TRUE)
 for (f in list.files(here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
-PROJECT_ID  <- 2L
+PROJECT_ID  <- ecotaxa_project_id()
 DATASET_KEY <- paste0("ecotaxa-om-prj", PROJECT_ID)
 VERSION     <- format(Sys.Date())
 DIR_EXPORT  <- here("data/export", paste0("project-", PROJECT_ID))
 DIR_DWCA    <- here("data/darwincore", DATASET_KEY)
 DIR_NCEI    <- here("data/ncei")
 export_info <- fromJSON(file.path(DIR_EXPORT, "export.json"))
+meta        <- read_project_meta(here("metadata/projects.csv"), PROJECT_ID)
+project     <- ecotaxa_projects() |> filter(projid == PROJECT_ID)
 str(export_info)
 ```
 
@@ -39,7 +41,7 @@ dwca_zip  <- file.path(DIR_DWCA, paste0(DATASET_KEY, "_", VERSION, ".zip"))
 eml_path  <- file.path(DIR_DWCA, "eml.xml")
 stopifnot(file.exists(dwca_zip), file.exists(eml_path), length(tsv_paths) > 0)
 manifest  <- fromJSON(file.path(DIR_DWCA, paste0(DATASET_KEY, "_", VERSION, "_manifest.json")))
-basename(c(tsv_paths, dwca_zip, eml_path))
+cat(length(tsv_paths), "TSV files;", basename(c(dwca_zip, eml_path)), "\n")
 ```
 
 ## Build the bag
@@ -49,30 +51,37 @@ basename(c(tsv_paths, dwca_zip, eml_path))
 b <- ncei_package(DIR_NCEI, DATASET_KEY, VERSION, tsv_paths = tsv_paths, image_dir = export_info$image_dir,
                   dwca_zip = dwca_zip, eml_path = eml_path,
                   dataset_json = list(
-                    organization = "Ocean Metrics",
-                    title = "US EcoTaxa demo, project 2 (Zooscan test set)",
+                    organization = meta$organization,
+                    title = meta$title,
                     source_project_url = paste0(ecotaxa_url(), "/prj/", PROJECT_ID),
                     dwca_content_hash = manifest$content_hash,
-                    instrument = "Zooscan",
-                    instrument_vocab = "http://vocab.nerc.ac.uk/collection/L22/current/TOOL1581/",
-                    verification = "classifier predictions only; no validated object in this demo project",
-                    license = "CC BY 4.0 (demo)"))
+                    instrument = project$instrument,
+                    instrument_vocab = project$instrument_url,
+                    verification = meta$verification,
+                    license = meta$license))
 str(b)
-cat(list.files(b$bag, recursive = TRUE), sep = "\n")
+# the layout, one line per folder with its file count (a project can hold a million images)
+bag_files <- list.files(b$bag, recursive = TRUE)
+tibble(folder = ifelse(grepl("/", bag_files), sub("/[^/]+$", "", bag_files), ".")) |>
+  mutate(folder = sub("^(data/images/[^/]+)/.*$", "\\1", folder)) |>
+  count(folder) |> head(40)
 ```
 
 ```{r}
 #| label: tagfiles
 cat(readLines(file.path(b$bag, "bag-info.txt")), sep = "\n")
-cat(readLines(file.path(b$bag, "manifest-sha256.txt")), sep = "\n")
+man_lines <- readLines(file.path(b$bag, "manifest-sha256.txt"))
+cat(length(man_lines), "payload files in the manifest; the first ten:\n")
+cat(head(man_lines, 10), sep = "\n")
 ```
 
 ## Verify
 
 ```{r}
 #| label: verify
-ncei_verify(b$bag)
-stopifnot(identical(ncei_verify(b$bag)$finding, "ok"))
+v <- ncei_verify(b$bag)
+v
+stopifnot(identical(v$finding, "ok"))
 ```
 
 ## What a submission would then look like (assumption, to agree)

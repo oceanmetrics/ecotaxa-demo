@@ -78,3 +78,15 @@ test_that("dwc_archive() zips deterministically and writes a manifest", {
   m <- jsonlite::fromJSON(a1$manifest)
   expect_equal(m$counts$occurrence, 2L); expect_equal(m$archive, "p2_2026-11-06.zip")
 })
+test_that("dwc_emof() mean ESD pools every category of an occurrence and only its own event and status (regression: vectorized join)", {
+  o <- fixture_objects()
+  # a seventh object: validated Cyclopoida in s1/a1 again, so that occurrence averages two objects
+  o <- dplyr::bind_rows(o, o[1, ] |> dplyr::mutate(object_id = "o7", object_esd = 30))
+  ev <- dwc_event(o, "p2"); oc <- dwc_occurrence(o, ev, lk, "p2", include_predicted = TRUE)
+  em <- dwc_emof(o, ev, oc, reg, "p2")
+  esd <- em[em$measurementType == "mean equivalent spherical diameter", ]
+  expect_equal(esd$measurementValue[esd$occurrenceID == "p2:s1:a1:1101:validated"], "20")   # mean(10, 30)
+  # the predicted Cyclopoida in s1/a2 (esd 30) stays apart from the validated one
+  expect_equal(esd$measurementValue[esd$occurrenceID == "p2:s1:a2:1101:predicted"], "30")
+  expect_equal(nrow(esd), nrow(oc))
+})
