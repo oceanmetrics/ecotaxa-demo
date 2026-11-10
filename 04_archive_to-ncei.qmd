@@ -98,7 +98,8 @@ stopifnot(identical(v$finding, "ok"))
 
 ## Lessons learned (project 4, 2026-11-10)
 
-- **Scale.** Project 4's bag is 11 GB, 967,734 images and 967,842 payload files. Two loops that were fine on
+- **Scale.** Project 4's bag is 10.05 GB, 967,734 images and 967,842 payload files; build, manifest and verify
+  (`ok`) take 12 minutes on the mini. Two loops that were fine on
   eight objects were not: copying one image per call (now one vectorized `file.copy`), and `ncei_verify()`
   looking each manifest entry up by name inside a loop, which is quadratic and ran for over half an hour
   without finishing (now one vectorized comparison; a test covers missing, unlisted and changed files together).

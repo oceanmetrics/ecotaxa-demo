@@ -113,9 +113,20 @@ project's pages are published only on purpose. Before a project's first run, add
 | 01 export | 28 batches of at most 40,000 objects, 44 min; 105 TSVs, 967,734 images (11 GB) |
 | 02 taxa | 73 categories: 48 `aphia`, 10 `ancestor`, 15 `excluded`, 0 unresolved |
 | 03 OBIS | 373 events (105 samples, 268 acquisitions), 755 occurrences from 3,861 validated objects, 860 eMoF rows; no errors |
-| 04 NCEI | bag of 967,842 payload files, 11 GB, SHA-256 manifest |
+| 04 NCEI | bag of 967,842 payload files, 10.05 GB, SHA-256 manifest, verified `ok`; 12 min |
 
-## 5. Lessons for the next project
+## 5. Share the packages for review
+
+The packages went to the group, not to a portal: a Drive subfolder shared as viewer with the email thread,
+uploaded from the mini (which has the same rclone remotes as the laptop). The NCEI bag is zipped without
+compression (`zip -0`): the images are JPEGs already.
+
+```{bash}
+cd data && zip -0 -r -q share_project-4/ecotaxa-om-prj4_2026-11-10_ncei-bag.zip ncei/ecotaxa-om-prj4_2026-11-10
+rclone copy share_project-4 "gdrive-ecoquants:project-4 packages 2026-11-10" --drive-root-folder-id <folder id>
+```
+
+## 6. Lessons for the next project
 
 1. **Run the real export early.** The demo's offline fallback hid a wrong request body; a real project
    surfaced it, plus four more issues (see the lessons in [01](01_export_ecotaxa.qmd)).
