@@ -1,0 +1,8 @@
+project_id,ecotaxa_id,ecotaxa_name,decision,note,reviewed_by,reviewed_on
+4,85115,part<Crustacea,excluded,a body part is not an individual,Enrique Montes,2026-11-11
+4,85044,multiple<Copepoda,excluded,an image holds several copepods,Enrique Montes,2026-11-11
+4,92008,rods<other,excluded,not a taxon,Enrique Montes,2026-11-11
+4,96806,microplastics,excluded,not a taxon,Enrique Montes,2026-11-11
+4,85009,centric,verify,Bacillariophyta as the nearest WoRMS ancestor needs verification,Enrique Montes,2026-11-11
+4,94745,ciliate-tintinnids,verify,Ciliophora as the nearest WoRMS ancestor needs verification,Enrique Montes,2026-11-11
+4,102223,tintinnida,verify,Tintinnidae as the nearest WoRMS ancestor needs verification,Enrique Montes,2026-11-11

@@ -34,6 +34,7 @@ decision as a cross-check.
 | phylogenetic (type P) with an `aphia_id` on the node | use it, verify in WoRMS, publish under the valid name | `aphia` |
 | phylogenetic without an `aphia_id` | exact name match in WoRMS; no hit stops the build | `name_match` / `unresolved` |
 | morphological under Biota (`egg<other`, `nauplii<Cyclopoida`) | nearest ancestor with an `aphia_id`, unless it is only Biota | `ancestor` / `excluded` |
+| a reviewer's call in `metadata/taxa_review.csv` | applied last: `excluded` drops the category, `verify` flags it in `note` | `excluded` / as decided |
 
 The decision is pure and tested without the network (`tests/testthat/test-taxa.R`); WoRMS is injected, so the
 same code runs against a canned WoRMS in the tests and against `worrms` here.
@@ -64,8 +65,11 @@ cat(length(used), "categories in use on project", PROJECT_ID, "\n")
 ```{r}
 #| label: lookup
 decided <- taxa_decide(taxa) |> filter(ecotaxa_id %in% used)
-lookup  <- taxa_worms_fill(decided)
+# the data owner's calls (metadata/taxa_review.csv) after the rules, so a regenerated lookup keeps them
+review  <- read_taxa_review(here("metadata/taxa_review.csv"), PROJECT_ID)
+lookup  <- taxa_worms_fill(decided) |> taxa_apply_review(review)
 write_taxa_lookup(lookup, LOOKUP_CSV)
+review |> select(ecotaxa_name, decision, note, reviewed_by, reviewed_on)
 lookup |> select(ecotaxa_id, ecotaxa_name, decision, aphia_id, scientific_name, rank, status, note)
 ```
 
@@ -116,5 +120,10 @@ fixes the category on the node.
   (`rods<other` 4,082, `artefact` 3,043, `ghost`, `dubious`, `detritus`, `unidentified cells`), so only 3,861
   become occurrences. A morphological category like `rods<other` is a question for the data owner, not a rule
   to change silently.
+- **The owner's review, 2026-11-11** (`metadata/taxa_review.csv`): Enrique Montes excluded `part<Crustacea`
+  (a body part is not an individual; 49,874 predicted objects) and `multiple<Copepoda` (several copepods per
+  image), confirmed `rods<other` and `microplastics` as not taxa, and asked for `centric`, `ciliate-tintinnids`
+  and `tintinnida` to be verified; they stay published under their ancestors, flagged `TO VERIFY` in `note`.
+  The review lives in its own file because this notebook rewrites the lookup on every run.
 - Keep one lookup per project (`metadata/taxa_lookup_project-<id>.csv`): the same category can be reviewed
   differently for two instruments.

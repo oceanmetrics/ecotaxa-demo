@@ -51,3 +51,30 @@ test_that("ecotaxa_category_ids() maps exported display names to ids and refuses
   taxa2 <- tibble::tibble(ecotaxa_id = 1:2, display_name = c("egg", "egg"))
   expect_error(ecotaxa_category_ids("egg", taxa2), "shared by two categories")
 })
+test_that("taxa_apply_review() excludes and flags as the reviewer decided, idempotently", {
+  lk <- build_taxa_lookup(fixture_taxa(), by_id = fake_worms$by_id, by_name = fake_worms$by_name)
+  rv <- tibble::tibble(project_id = 2L, ecotaxa_id = c(78418L, 45072L), ecotaxa_name = c("Oncaeidae", "Cyclopoida"),
+                       decision = c("excluded", "verify"), note = c("not wanted", "check the order"),
+                       reviewed_by = "A Person", reviewed_on = "2026-11-11")
+  x <- taxa_apply_review(lk, rv)
+  onc <- x[x$ecotaxa_id == 78418L, ]
+  expect_equal(onc$decision, "excluded"); expect_true(is.na(onc$aphia_id)); expect_true(is.na(onc$lsid))
+  expect_equal(onc$note, "review 2026-11-11 (A Person): not wanted")
+  cyc <- x[x$ecotaxa_id == 45072L, ]
+  expect_equal(cyc$decision, lk$decision[lk$ecotaxa_id == 45072L]); expect_equal(cyc$aphia_id, 1101L)
+  expect_match(cyc$note, "; TO VERIFY, review 2026-11-11 \\(A Person\\): check the order$")
+  expect_identical(taxa_apply_review(x, rv), x)
+  # an excluded category is no longer an occurrence
+  oc <- dwc_occurrence(fixture_objects(), dwc_event(fixture_objects(), "p2"), x, "p2")
+  expect_false("Oncaeidae" %in% oc$scientificName)
+  expect_error(taxa_apply_review(lk, transform(rv[1, ], ecotaxa_id = 999L)), "absent from the lookup: 999")
+  expect_error(taxa_apply_review(lk, transform(rv[1, ], decision = "maybe")), "unknown review decision: maybe")
+})
+test_that("the project 4 review excludes part<Crustacea and multiple<Copepoda in the committed lookup", {
+  lk4 <- read_taxa_lookup(file.path(root, "metadata/taxa_lookup_project-4.csv"))
+  rv4 <- read_taxa_review(file.path(root, "metadata/taxa_review.csv"), 4)
+  expect_identical(taxa_apply_review(lk4, rv4), lk4)            # already applied
+  ex <- lk4$decision[match(c("part<Crustacea", "multiple<Copepoda", "rods<other", "microplastics"), lk4$ecotaxa_name)]
+  expect_equal(ex, rep("excluded", 4))
+  expect_true(all(grepl("TO VERIFY", lk4$note[lk4$ecotaxa_name %in% c("centric", "ciliate-tintinnids", "tintinnida")])))
+})

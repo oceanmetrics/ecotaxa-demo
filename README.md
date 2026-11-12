@@ -18,7 +18,7 @@ https://ecotaxa.oceanmetrics.io (project 2, "US EcoTaxa demo", eight Zooscan obj
 | `R/` | the functions the notebooks call: `ecotaxa_api.R`, `taxa.R`, `dwc.R`, `eml.R`, `ncei.R` |
 | `tests/testthat/` | one test file per rule set, on small synthetic fixtures; `Rscript tests/run_tests.R` |
 | `diagrams/` | mermaid sources (`*.mmd`) and their PNG renders, used by both the notebooks and the brief |
-| `metadata/` | `measurement_type.csv` (NERC ids, filled only on an exact match), `projects.csv` (title, abstract, license and contact per project) and the generated `taxa_lookup_project-<id>.csv` |
+| `metadata/` | `measurement_type.csv` (NERC ids, filled only on an exact match), `projects.csv` (title, abstract, license, contact and credited people per project), the generated `taxa_lookup_project-<id>.csv`, and the hand-kept decisions applied on top of the export: `ecotaxa_data_dictionary.csv` (NCEI's draft column definitions and units), `column_units.csv` (an owner's unit where the dictionary differs), `sample_fixes.csv` (an owner's value for a sample field) and `taxa_review.csv` (an owner's call on a category) |
 | `data-raw/import_test/` | the upstream EcoTaxa test set, the same eight objects as project 2, for runs without a login |
 
 ## Run

@@ -7,7 +7,8 @@
 sha256_file <- function(path) digest::digest(file = path, algo = "sha256")
 
 ncei_package <- function(out_dir, dataset_key, version, tsv_paths, image_dir = NULL, dwca_zip = NULL,
-                         eml_path = NULL, dataset_json = list(), source_url = ecotaxa_url()) {
+                         eml_path = NULL, dataset_json = list(), source_url = ecotaxa_url(),
+                         column_dictionary = NULL, metadata_files = character()) {
   bag <- file.path(out_dir, paste0(dataset_key, "_", version))
   if (dir.exists(bag)) unlink(bag, recursive = TRUE)
   dirs <- file.path(bag, "data", c("images", "ecotaxa_export", "dwca", "metadata"))
@@ -27,6 +28,11 @@ ncei_package <- function(out_dir, dataset_key, version, tsv_paths, image_dir = N
   }
   if (!is.null(dwca_zip) && file.exists(dwca_zip)) file.copy(dwca_zip, file.path(bag, "data/dwca", basename(dwca_zip)))
   if (!is.null(eml_path) && file.exists(eml_path)) file.copy(eml_path, file.path(bag, "data/metadata/eml.xml"))
+  # the TSV columns' definitions and units (ecotaxa_column_dictionary()), and the hand-kept
+  # decisions applied to the published tables (sample fixes, taxa review, the lookup)
+  if (!is.null(column_dictionary))
+    readr::write_csv(column_dictionary, file.path(bag, "data/metadata/data_dictionary.csv"), na = "")
+  for (p in metadata_files[file.exists(metadata_files)]) file.copy(p, file.path(bag, "data/metadata", basename(p)))
   dj <- c(list(dataset_key = dataset_key, version = version, source = source_url,
                n_images = n_img, n_tsv = length(tsv_paths),
                created_utc = format(as.POSIXct(Sys.time(), tz = "UTC"), "%Y-%m-%dT%H:%M:%SZ")), dataset_json)

@@ -8,7 +8,7 @@ execute:
 ---
 
 Each point is one sample. Click a point for its name and a link to its images on the
-[demo node](https://ecotaxa.oceanmetrics.io/explore/?projid=4). Positions are read from the node's API when this
+[demo node](https://ecotaxa.oceanmetrics.io/explore/?projid=4). Positions are read from the node's API, with the owner's corrections in `metadata/sample_fixes.csv`, when this
 page is built.
 
 ```{r}
@@ -18,7 +18,12 @@ for (f in list.files(here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
 PROJECT_ID <- 4L
 URL_NODE   <- "https://ecotaxa.oceanmetrics.io"
 
-x       <- split_mappable_samples(ecotaxa_project_samples(PROJECT_ID, base = URL_NODE))
+# the owner's corrections (metadata/sample_fixes.csv) on the node's positions
+fixes   <- read_sample_fixes(here("metadata/sample_fixes.csv"), PROJECT_ID)
+fixes   <- fixes[fixes$field %in% c("object_lat", "object_lon"), ]
+x       <- ecotaxa_project_samples(PROJECT_ID, base = URL_NODE) |>
+  apply_sample_fixes(fixes, id = "orig_id", fields = c(object_lat = "lat", object_lon = "lon")) |>
+  split_mappable_samples()
 cap_map <- samples_map_caption(x$mapped, x$dropped, "EcoTaxa project 4")
 ```
 

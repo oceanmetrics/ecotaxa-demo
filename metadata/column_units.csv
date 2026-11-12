@@ -1,0 +1,5 @@
+project_id,field,unit,source
+4,sample_total_volume,L,"Enrique Montes, 2026-11-11 (the data dictionary says mL)"
+4,sample_concentrated_sample_volume,mL,"Enrique Montes, 2026-11-11"
+4,acq_volume,mL,"Enrique Montes, 2026-11-11"
+4,acq_imaged_volume,mL,"Enrique Montes, 2026-11-11"

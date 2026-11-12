@@ -38,18 +38,114 @@ ecotaxa_datetime <- function(date, time) {
   out
 }
 
+# volumes per acquisition, in m3. coldict (ecotaxa_column_dictionary()) gives each column's unit.
+#  - PlanktoScope (sample_total_volume, sample_concentrated_sample_volume, acq_imaged_volume): the
+#    net filters sample_total_volume of seawater, concentrated to sample_concentrated_sample_volume,
+#    diluted by sample_dilution_factor (1 when absent), of which acq_imaged_volume is imaged, so the
+#    seawater an acquisition represents is total x imaged / (concentrated x dilution)
+#  - Zooscan (sample_tot_vol, m3): the seawater a fraction represents is sample_tot_vol / acq_sub_part
+#    (acq_sub_part is the subsampling denominator); no acq_sub_part, no represented volume
+# returns one row per sample_id x acq_id: sample_m3 (seawater sampled), imaged_m3 (seawater the
+# imaged objects represent) and method (the formula, for measurementMethod).
+ecotaxa_volumes <- function(objects, coldict = NULL) {
+  has <- function(...) all(c(...) %in% names(objects))
+  unit <- function(field, default = NA_character_) {
+    u <- if (is.null(coldict)) NA_character_ else column_unit(coldict, field)[[1]]
+    if (is.na(u)) default else u
+  }
+  num <- function(nm) suppressWarnings(as.numeric(.col(objects, nm)))
+  o <- tibble::tibble(sample_id = objects$sample_id, acq_id = .col(objects, "acq_id"))
+  if (has("sample_total_volume", "sample_concentrated_sample_volume", "acq_imaged_volume")) {
+    u <- c(tot = unit("sample_total_volume"), conc = unit("sample_concentrated_sample_volume"),
+           img = unit("acq_imaged_volume"))
+    dil <- num("sample_dilution_factor"); dil[is.na(dil)] <- 1
+    tot  <- volume_to_m3(num("sample_total_volume"), u[["tot"]])
+    conc <- volume_to_m3(num("sample_concentrated_sample_volume"), u[["conc"]])
+    img  <- volume_to_m3(num("acq_imaged_volume"), u[["img"]])
+    o$sample_m3 <- tot
+    o$imaged_m3 <- ifelse(conc > 0 & dil > 0, tot * img / (conc * dil), NA_real_)
+    o$method <- sprintf(paste0("PlanktoScope: sample_total_volume (%s) x acq_imaged_volume (%s) / ",
+      "(sample_concentrated_sample_volume (%s) x sample_dilution_factor), in m3"), u[["tot"]], u[["img"]], u[["conc"]])
+  } else if (has("sample_tot_vol")) {
+    tot <- volume_to_m3(num("sample_tot_vol"), unit("sample_tot_vol", "m3"))
+    sub <- num("acq_sub_part")
+    o$sample_m3 <- tot
+    o$imaged_m3 <- ifelse(!is.na(sub) & sub > 0, tot / sub, NA_real_)
+    o$method <- "Zooscan: sample_tot_vol / acq_sub_part, in m3"
+  } else {
+    o$sample_m3 <- NA_real_; o$imaged_m3 <- NA_real_; o$method <- NA_character_
+  }
+  o |> dplyr::group_by(sample_id, acq_id) |>
+    dplyr::summarise(sample_m3 = .one(sample_m3), imaged_m3 = .one(imaged_m3), method = .one(method),
+                     .groups = "drop")
+}
+
+# findings on the volume fields of each sample, for the data owner to confirm before volumes are
+# published: a dilution that is not 1 or not positive, a missing input, or a sampled volume more than
+# ten times from the project's median (a likely unit or typing error). one row per sample.
+volume_review <- function(objects, coldict = NULL) {
+  num <- function(nm) suppressWarnings(as.numeric(.col(objects, nm)))
+  d <- tibble::tibble(sample_id = objects$sample_id, acq_id = .col(objects, "acq_id"),
+                      total = num("sample_total_volume"), concentrated = num("sample_concentrated_sample_volume"),
+                      dilution = num("sample_dilution_factor"), imaged = num("acq_imaged_volume")) |>
+    dplyr::distinct()
+  v <- ecotaxa_volumes(objects, coldict)
+  s <- d |> dplyr::group_by(sample_id) |>
+    # the flags first: summarise() replaces dilution and imaged with their text right after
+    dplyr::summarise(n_acq = dplyr::n_distinct(acq_id),
+                     any_na = any(is.na(total) | is.na(concentrated) | is.na(imaged)),
+                     dil_na = any(is.na(dilution)), dil_not1 = any(!is.na(dilution) & dilution != 1),
+                     dil_bad = any(!is.na(dilution) & dilution <= 0),
+                     total = .one(total), concentrated = .one(concentrated),
+                     dilution = paste(sort(unique(stats::na.omit(dilution))), collapse = ", "),
+                     imaged = paste(sort(unique(stats::na.omit(imaged))), collapse = ", "), .groups = "drop") |>
+    dplyr::left_join(v |> dplyr::group_by(sample_id) |>
+                       dplyr::summarise(imaged_m3 = if (any(is.na(imaged_m3))) NA_real_ else sum(imaged_m3), .groups = "drop"),
+                     by = "sample_id")
+  med <- stats::median(s$total[s$total > 0], na.rm = TRUE)
+  far <- !is.na(s$total) & (s$total <= 0 | s$total > 10 * med | s$total < med / 10)
+  flag <- function(...) { x <- c(...); paste(x[nzchar(x)], collapse = "; ") }
+  s$finding <- mapply(flag, USE.NAMES = FALSE,
+    ifelse(s$any_na, "a volume input is missing", ""),
+    ifelse(s$dil_na, "dilution factor missing (1 assumed)", ""),
+    ifelse(s$dil_bad, "dilution factor not positive", ifelse(s$dil_not1, "dilution factor not 1", "")),
+    ifelse(far, sprintf("total volume more than 10x off the project median (%s)", format(signif(med, 4))), ""))
+  s |> dplyr::transmute(sample_id, n_acq, sample_total_volume = total, sample_concentrated_sample_volume = concentrated,
+                        sample_dilution_factor = dilution, acq_imaged_volume = imaged,
+                        imaged_m3 = signif(imaged_m3, 4), finding) |>
+    dplyr::arrange(dplyr::desc(nzchar(finding)), sample_id)
+}
+
+# the seawater each event represents: its acquisition's for an acquisition event, the sum over the
+# sample's acquisitions for a sample event (NA if any is unknown)
+.event_volumes <- function(vols, event, prefix) {
+  acq_ev <- event$eventID[event$eventType == "acquisition"]
+  v <- vols |> dplyr::mutate(cand = paste0(prefix, ":", sample_id, ":", acq_id),
+                             eventID = ifelse(cand %in% acq_ev, cand, paste0(prefix, ":", sample_id)))
+  v |> dplyr::group_by(eventID) |>
+    dplyr::summarise(imaged_m3 = if (any(is.na(imaged_m3))) NA_real_ else sum(imaged_m3),
+                     method = .one(method), .groups = "drop")
+}
+
 # one unique non-NA value per group, else NA (a sample with two positions gets none, not a mean)
 .one <- function(x) { u <- unique(x[!is.na(x)]); if (length(u) == 1) u else x[NA_integer_][1] }
 .col <- function(d, nm) if (nm %in% names(d)) d[[nm]] else rep(NA, nrow(d))
 
 # the Event core: one event per sample; a child event per acquisition when a sample has
-# more than one. prefix (the project key) keeps ids unique across projects.
-dwc_event <- function(objects, prefix, instrument_url = NA_character_) {
+# more than one. prefix (the project key) keeps ids unique across projects. sampleSizeValue is the
+# seawater sampled (m3) on a sample event and the seawater imaged objects represent on an
+# acquisition event (ecotaxa_volumes(), with units from coldict). volumes = FALSE withholds them
+# (projects.csv `volumes`), while the owner confirms the volume fields.
+dwc_event <- function(objects, prefix, instrument_url = NA_character_, coldict = NULL, volumes = TRUE) {
   stopifnot(all(c("sample_id", "object_lat", "object_lon", "object_date") %in% names(objects)))
+  vols <- ecotaxa_volumes(objects, coldict)
+  if (!volumes) { vols$sample_m3 <- NA_real_; vols$imaged_m3 <- NA_real_ }
+  gear <- .col(objects, "sample_samplinggear")
+  if (all(is.na(gear))) gear <- .col(objects, "sample_sampling_gear")
   o <- objects |>
-    dplyr::mutate(acq_id = .col(objects, "acq_id"), gear = .col(objects, "sample_samplinggear"),
+    dplyr::mutate(acq_id = .col(objects, "acq_id"), gear = gear,
                   instrument = .col(objects, "acq_instrument"),
-                  tot_vol = suppressWarnings(as.numeric(.col(objects, "sample_tot_vol"))),
+                  tot_vol = vols$sample_m3[match(sample_id, vols$sample_id)],
                   dt = ecotaxa_datetime(object_date, .col(objects, "object_time")),
                   depth_min = suppressWarnings(as.numeric(.col(objects, "object_depth_min"))),
                   depth_max = suppressWarnings(as.numeric(.col(objects, "object_depth_max"))))
@@ -86,12 +182,14 @@ dwc_event <- function(objects, prefix, instrument_url = NA_character_) {
       dplyr::group_by(sample_id, acq_id) |>
       dplyr::summarise(eventDate = if (all(is.na(dt))) NA_character_ else min(dt, na.rm = TRUE),
                        .groups = "drop") |>
+      dplyr::left_join(vols[, c("sample_id", "acq_id", "imaged_m3")], by = c("sample_id", "acq_id")) |>
       dplyr::transmute(eventID = paste0(prefix, ":", sample_id, ":", acq_id),
                        parentEventID = paste0(prefix, ":", sample_id), eventType = "acquisition",
                        eventDate, decimalLatitude = NA_real_, decimalLongitude = NA_real_,
                        geodeticDatum = NA_character_, minimumDepthInMeters = NA_real_,
                        maximumDepthInMeters = NA_real_, samplingProtocol = NA_character_,
-                       sampleSizeValue = NA_real_, sampleSizeUnit = NA_character_, datasetID = prefix)
+                       sampleSizeValue = signif(imaged_m3, 6),
+                       sampleSizeUnit = ifelse(is.na(imaged_m3), NA_character_, "m3"), datasetID = prefix)
     ev <- dplyr::bind_rows(ev, acq)
   }
   .drop_all_na(ev, keep = c("eventID", "parentEventID"))
@@ -160,20 +258,24 @@ dwc_occurrence <- function(objects, event, lookup, prefix, include_predicted = F
 read_measurement_registry <- function(path) readr::read_csv(path, show_col_types = FALSE,
   col_types = readr::cols(.default = "c"))
 
-# eMoF: event grain (instrument, sample volume) and occurrence grain (count per occurrence,
-# concentration when a sample volume exists, mean ESD in pixels as exported)
-dwc_emof <- function(objects, event, occurrence, registry, prefix, instrument_url = NA_character_) {
+# eMoF: event grain (instrument, sample volume, imaged volume) and occurrence grain (count per
+# occurrence, concentration where the event's imaged volume is known, mean ESD in pixels as exported)
+dwc_emof <- function(objects, event, occurrence, registry, prefix, instrument_url = NA_character_,
+                     coldict = NULL, volumes = TRUE) {
   reg_of <- function(type, col) {
     v <- registry[[col]][match(type, registry$measurement_type)]
     ifelse(is.na(v) | v == "", NA_character_, v)
   }
-  row <- function(eventID, occurrenceID, type, value, unit = NULL, value_id = NA_character_) tibble::tibble(
+  row <- function(eventID, occurrenceID, type, value, unit = NULL, value_id = NA_character_,
+                  method = NA_character_) tibble::tibble(
     eventID = eventID, occurrenceID = occurrenceID,
     measurementID = paste0(ifelse(is.na(occurrenceID), eventID, occurrenceID), ":", type),
     measurementType = type, measurementTypeID = reg_of(type, "nerc_p01"),
     measurementValue = as.character(value), measurementValueID = value_id,
     measurementUnit = if (is.null(unit)) reg_of(type, "unit") else unit,
-    measurementUnitID = reg_of(type, "nerc_p06"))
+    measurementUnitID = reg_of(type, "nerc_p06"), measurementMethod = method)
+  ev_vol <- .event_volumes(ecotaxa_volumes(objects, coldict), event, prefix)
+  if (!volumes) ev_vol$imaged_m3 <- NA_real_
   out <- list()
   # event grain
   ev <- event[event$eventType == "sample", ]
@@ -191,11 +293,14 @@ dwc_emof <- function(objects, event, occurrence, registry, prefix, instrument_ur
   # occurrence grain
   if (nrow(occurrence)) {
     out$count <- row(occurrence$eventID, occurrence$occurrenceID, "object count", occurrence$organismQuantity)
-    if ("sampleSizeValue" %in% names(ev)) {
-      v <- ev$sampleSizeValue[match(occurrence$eventID, ev$eventID)]
-      ok <- !is.na(v) & v > 0
+    # the imaged volume of each event that holds occurrences, then count / that volume
+    iv <- ev_vol[ev_vol$eventID %in% occurrence$eventID & !is.na(ev_vol$imaged_m3) & ev_vol$imaged_m3 > 0, ]
+    if (nrow(iv)) {
+      out$imaged <- row(iv$eventID, NA_character_, "imaged volume", signif(iv$imaged_m3, 6), method = iv$method)
+      i <- match(occurrence$eventID, iv$eventID); ok <- !is.na(i)
       if (any(ok)) out$conc <- row(occurrence$eventID[ok], occurrence$occurrenceID[ok], "concentration",
-                                   signif(occurrence$organismQuantity[ok] / v[ok], 6))
+        signif(occurrence$organismQuantity[ok] / iv$imaged_m3[i[ok]], 6),
+        method = paste0("object count / imaged volume; ", iv$method[i[ok]]))
     }
     if ("object_esd" %in% names(objects)) {
       esd <- tibble::tibble(eventID = .object_event(objects, event, prefix),
@@ -223,8 +328,8 @@ dwc_emof <- function(objects, event, occurrence, registry, prefix, instrument_ur
   }
   if (!length(out)) return(NULL)
   # the NERC id columns stay even when empty: an empty id is a visible gap, a missing column is not
-  dplyr::bind_rows(out) |> .drop_all_na(keep = c("eventID", "occurrenceID", "measurementID",
-                                                "measurementTypeID", "measurementUnitID"))
+  dplyr::bind_rows(out) |>
+    .drop_all_na(keep = c("eventID", "occurrenceID", "measurementID", "measurementTypeID", "measurementUnitID"))
 }
 
 .drop_all_na <- function(d, keep = character()) {

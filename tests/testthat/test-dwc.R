@@ -105,3 +105,82 @@ test_that("dwc_event() publishes a 0,0 sample without coordinates, but keeps a r
   o$object_lon[o$sample_id == "s2"] <- -80
   expect_equal(dwc_event(o, "p2")$decimalLatitude[dwc_event(o, "p2")$eventID == "p2:s2"], 0)
 })
+# a PlanktoScope-like export: s1 with two acquisitions, s2 with one; units as project 4's owner gave them
+planktoscope_objects <- function() fixture_objects() |>
+  dplyr::select(-sample_tot_vol) |>
+  dplyr::mutate(sample_total_volume = c("40300", "40300", "40300", "40300", "20000", "20000"),
+                sample_concentrated_sample_volume = c("584", "584", "584", "584", "500", "500"),
+                sample_dilution_factor = c("1", "1", "1", "1", "2", "2"),
+                acq_imaged_volume = "0.6242", acq_instrument = "PlanktoScope v2.5")
+ps_units <- tibble::tibble(
+  field = c("sample_total_volume", "sample_concentrated_sample_volume", "acq_imaged_volume"),
+  category = NA, definition = "x", unit = c("L", "mL", "mL"), documented = TRUE, unit_source = "owner")
+
+test_that("ecotaxa_volumes() follows the PlanktoScope relation total x imaged / (concentrated x dilution)", {
+  v <- ecotaxa_volumes(planktoscope_objects(), ps_units)
+  a1 <- v[v$acq_id == "a1", ]
+  expect_equal(a1$sample_m3, 40.3)
+  expect_equal(a1$imaged_m3, 40.3 * 0.6242e-6 / 584e-6)        # 0.0430737 m3, about 43 L
+  s2 <- v[v$sample_id == "s2", ]
+  expect_equal(s2$imaged_m3, 20 * 0.6242e-6 / (500e-6 * 2))     # the dilution halves it
+  expect_match(a1$method, "sample_total_volume \\(L\\) x acq_imaged_volume \\(mL\\)")
+  # without units the PlanktoScope columns cannot be read: stop, never assume
+  expect_error(ecotaxa_volumes(planktoscope_objects()), "no known volume unit")
+})
+test_that("ecotaxa_volumes() for Zooscan divides sample_tot_vol by acq_sub_part, and gives none without it", {
+  o <- fixture_objects()
+  expect_true(all(is.na(ecotaxa_volumes(o)$imaged_m3)))
+  o$acq_sub_part <- "4"
+  v <- ecotaxa_volumes(o)
+  expect_equal(v$imaged_m3[v$acq_id == "a1"], 0.5)
+  expect_equal(v$sample_m3[v$acq_id == "a1"], 2)
+})
+test_that("dwc_event() and dwc_emof() report sampled and imaged volume, and concentration per imaged volume", {
+  o <- planktoscope_objects()
+  ev <- dwc_event(o, "p4", coldict = ps_units); oc <- dwc_occurrence(o, ev, lk, "p4")
+  expect_equal(ev$sampleSizeValue[ev$eventID == "p4:s1"], 40.3)
+  expect_equal(ev$sampleSizeValue[ev$eventID == "p4:s1:a1"], signif(40.3 * 0.6242 / 584, 6))
+  em <- dwc_emof(o, ev, oc, reg, "p4", coldict = ps_units)
+  img <- em[em$measurementType == "imaged volume", ]
+  expect_equal(img$eventID, "p4:s1:a1")                          # only events that hold occurrences
+  conc <- em[em$measurementType == "concentration", ]
+  expect_equal(nrow(conc), nrow(oc))
+  expect_equal(as.numeric(conc$measurementValue[conc$occurrenceID == "p4:s1:a1:1101:validated"]),
+               signif(1 / (40.3 * 0.6242e-6 / 584e-6), 6))       # 23.2 individuals per m3
+  expect_equal(unique(conc$measurementUnit), "individuals per m3")
+  expect_match(conc$measurementMethod[1], "^object count / imaged volume; PlanktoScope")
+  expect_equal(em$measurementValue[em$measurementType == "sample volume" & em$eventID == "p4:s2"], "20")
+  expect_equal(sum(duplicated(em$measurementID)), 0L)
+  expect_false(any(dwc_check(ev, oc, em)$level == "error"))
+})
+test_that("dwc_event() reads the PlanktoScope sampling gear column too", {
+  o <- planktoscope_objects() |> dplyr::select(-sample_samplinggear) |> dplyr::mutate(sample_sampling_gear = "net")
+  ev <- dwc_event(o, "p4", coldict = ps_units)
+  expect_equal(ev$samplingProtocol[ev$eventID == "p4:s1"], "PlanktoScope v2.5; net")
+})
+test_that("volume_review() flags dilution, missing inputs and outlying totals per sample (regression: project 4)", {
+  o <- planktoscope_objects()
+  o$sample_total_volume[o$sample_id == "s2"] <- "2557544141"
+  o <- dplyr::bind_rows(o, o[5, ] |> dplyr::mutate(object_id = "o9", sample_id = "s3", acq_id = "a9",
+                                                   sample_total_volume = "30000", sample_dilution_factor = "-0.5"),
+                        o[5, ] |> dplyr::mutate(object_id = "o10", sample_id = "s4", acq_id = "a10",
+                                                sample_total_volume = "35000", sample_dilution_factor = "1"))
+  r <- volume_review(o, ps_units)
+  expect_equal(nrow(r), 4L)
+  expect_match(r$finding[r$sample_id == "s2"], "dilution factor not 1; total volume more than 10x off")
+  expect_equal(r$finding[r$sample_id == "s3"], "dilution factor not positive")
+  expect_equal(r$finding[r$sample_id == "s1"], "")
+  expect_equal(r$sample_id[1:2], c("s2", "s3"))                  # findings first
+  # a missing dilution is missing, not "not positive" (regression: flags read the text column)
+  o$sample_dilution_factor[o$sample_id == "s4"] <- NA
+  expect_equal(volume_review(o, ps_units)$finding[volume_review(o, ps_units)$sample_id == "s4"],
+               "dilution factor missing (1 assumed)")
+})
+test_that("volumes = FALSE withholds sampled and imaged volume and concentration, keeps counts", {
+  o <- planktoscope_objects()
+  ev <- dwc_event(o, "p4", coldict = ps_units, volumes = FALSE); oc <- dwc_occurrence(o, ev, lk, "p4")
+  expect_false("sampleSizeValue" %in% names(ev))
+  em <- dwc_emof(o, ev, oc, reg, "p4", coldict = ps_units, volumes = FALSE)
+  expect_false(any(c("sample volume", "imaged volume", "concentration") %in% em$measurementType))
+  expect_true("object count" %in% em$measurementType)
+})

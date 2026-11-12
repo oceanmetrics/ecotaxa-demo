@@ -121,6 +121,39 @@ write_taxa_lookup <- function(lookup, path) readr::write_csv(lookup, path, na = 
 read_taxa_lookup <- function(path) readr::read_csv(path, show_col_types = FALSE,
   col_types = readr::cols(ecotaxa_id = "i", aphia_id = "i", valid_aphia_id = "i", .default = "c"))
 
+# metadata/taxa_review.csv: a person's call on a category of one project (project_id, ecotaxa_id,
+# ecotaxa_name, decision, note, reviewed_by, reviewed_on). decision is `excluded` (never an
+# occurrence) or `verify` (published as decided, flagged in the note until someone confirms it).
+read_taxa_review <- function(path, project_id) {
+  r <- readr::read_csv(path, show_col_types = FALSE,
+                       col_types = readr::cols(project_id = "i", ecotaxa_id = "i", .default = "c"))
+  r[r$project_id == as.integer(project_id), ]
+}
+
+# apply the review to a lookup, after the rules (taxa_decide) and WoRMS (taxa_worms_fill), so a
+# regenerated lookup keeps the person's calls. idempotent; a review of a category the lookup does
+# not have, or an unknown decision, stops.
+taxa_apply_review <- function(lookup, review) {
+  if (is.null(review) || !nrow(review)) return(lookup)
+  bad <- setdiff(review$decision, c("excluded", "verify"))
+  if (length(bad)) stop("unknown review decision: ", paste(bad, collapse = ", "), call. = FALSE)
+  miss <- setdiff(review$ecotaxa_id, lookup$ecotaxa_id)
+  if (length(miss)) stop("reviewed categories absent from the lookup: ", paste(miss, collapse = ", "), call. = FALSE)
+  worms_cols <- intersect(c("aphia_id", "scientific_name", "status", "valid_aphia_id", "valid_name", "rank",
+                            "kingdom", "phylum", "class", "order", "family", "genus", "lsid"), names(lookup))
+  for (k in seq_len(nrow(review))) {
+    r <- review[k, ]; i <- which(lookup$ecotaxa_id == r$ecotaxa_id)
+    tag <- paste0("review ", r$reviewed_on, " (", r$reviewed_by, "): ", r$note)
+    if (grepl(tag, lookup$note[i], fixed = TRUE)) next
+    if (r$decision == "excluded") {
+      lookup$decision[i] <- "excluded"
+      for (c in worms_cols) lookup[[c]][i] <- NA
+      lookup$note[i] <- tag
+    } else lookup$note[i] <- paste0(lookup$note[i], "; TO VERIFY, ", tag)
+  }
+  lookup
+}
+
 # the gate the OBIS notebook applies: every category used by the objects must be decided
 assert_taxa_resolved <- function(objects, lookup) {
   used <- unique(as.integer(objects$object_annotation_category_id))

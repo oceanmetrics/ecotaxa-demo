@@ -30,8 +30,41 @@ objects <- read_parquet(file.path(DIR_EXPORT, "objects.parquet"))
 lookup  <- read_taxa_lookup(here("metadata", paste0("taxa_lookup_project-", PROJECT_ID, ".csv")))
 meta    <- read_project_meta(here("metadata/projects.csv"), PROJECT_ID)
 reg     <- read_measurement_registry(here("metadata/measurement_type.csv"))
+# the column dictionary: NCEI's draft definitions and units, with the owner's unit corrections
+coldict <- ecotaxa_column_dictionary(names(objects),
+  read_data_dictionary(here("metadata/ecotaxa_data_dictionary.csv")),
+  read_column_units(here("metadata/column_units.csv"), PROJECT_ID))
 project <- ecotaxa_projects() |> filter(projid == PROJECT_ID)
 project |> select(projid, title, instrument, instrument_url)
+```
+
+## The owner's corrections
+
+Values the data owner gave for a sample (`metadata/sample_fixes.csv`) replace the exported ones before any
+table is built. The export itself, and the TSVs in the NCEI package, keep what the node holds; the node is
+only read here, so a correction also belongs on the node.
+
+```{r}
+#| label: fixes
+fixes   <- read_sample_fixes(here("metadata/sample_fixes.csv"), PROJECT_ID)
+objects <- apply_sample_fixes(objects, fixes)
+fixes
+# the units the volumes are read in, and where each unit comes from
+coldict |> filter(grepl("volume|dilution", field)) |> select(field, unit, unit_source, definition)
+coldict |> count(documented)
+```
+
+The volume fields per sample, with what needs the owner's confirmation. Until `volumes` is `publish` in
+`metadata/projects.csv`, sampled volume, imaged volume and concentration stay out of the archive; the
+table is written to `data/` so it can go to the owner.
+
+```{r}
+#| label: volumes
+vrev <- volume_review(objects, coldict)
+write_csv(vrev, file.path(DIR_EXPORT, paste0("volume_review_project-", PROJECT_ID, ".csv")), na = "")
+cat("volumes:", meta$volumes, "\n")
+vrev |> count(has_finding = nzchar(finding))
+vrev |> filter(nzchar(finding)) |> head(40)
 ```
 
 ## The gate on taxa, and the honest switch
@@ -51,15 +84,22 @@ INCLUDE_PREDICTED
 
 ```{r}
 #| label: tables
-event      <- dwc_event(objects, DATASET_KEY)
+# volumes are published only once the owner has confirmed the volume fields (projects.csv `volumes`)
+PUBLISH_VOLUMES <- identical(meta$volumes, "publish")
+event      <- dwc_event(objects, DATASET_KEY, coldict = coldict, volumes = PUBLISH_VOLUMES)
 occurrence <- dwc_occurrence(objects, event, lookup, DATASET_KEY, include_predicted = INCLUDE_PREDICTED)
-emof       <- dwc_emof(objects, event, occurrence, reg, DATASET_KEY, instrument_url = project$instrument_url)
+emof       <- dwc_emof(objects, event, occurrence, reg, DATASET_KEY, instrument_url = project$instrument_url,
+                       coldict = coldict, volumes = PUBLISH_VOLUMES)
 c(event = nrow(event), occurrence = nrow(occurrence), emof = nrow(emof))
 # the first rows of each (all of them for a small project)
 head(event, 15)
 occurrence |> select(occurrenceID, eventID, scientificName, scientificNameID, taxonRank, organismQuantity,
                      identificationVerificationStatus, identificationRemarks) |> head(15)
 emof |> select(eventID, occurrenceID, measurementType, measurementValue, measurementUnit, measurementTypeID, measurementUnitID, measurementValueID) |> head(15)
+# the measurements by type, with the range of their values
+emof |> group_by(measurementType, measurementUnit) |>
+  summarise(n = n(), min = min(suppressWarnings(as.numeric(measurementValue))),
+            max = max(suppressWarnings(as.numeric(measurementValue))), .groups = "drop")
 # the most frequent taxa by objects
 occurrence |> group_by(scientificName, taxonRank) |>
   summarise(events = n_distinct(eventID), objects = sum(organismQuantity), .groups = "drop") |>
@@ -84,10 +124,11 @@ obistools::check_eventids(event)   |> as_tibble()
 #| label: eml
 # every text comes from metadata/projects.csv (one row per project), never from another project's row
 eml <- build_eml(as.list(project), event, occurrence, meta = c(
-  meta[c("abstract", "license", "contact_name", "contact_email", "organization")],
+  meta[c("abstract", "license", "contact_name", "contact_email", "organization", "associated_parties")],
   list(instrument = project$instrument)))
 eml_check(eml)
-stopifnot(!any(eml_check(eml)$level == "error"))
+license_check(meta$license, "obis")
+stopifnot(!any(eml_check(eml)$level == "error"), license_check(meta$license, "obis")$level == "ok")
 dir.create(DIR_DWCA, recursive = TRUE, showWarnings = FALSE)
 eml_path <- write_eml(eml, file.path(DIR_DWCA, "eml.xml"))
 ```
@@ -118,11 +159,22 @@ cat(readLines(a$manifest), sep = "\n")
   longitude of 0 alone is kept.
 - **Validated only** by default: `INCLUDE_PREDICTED` turns on only when a project has no validated object (the
   demo); project 4's 951,833 predictions stay out.
-- **Column names differ by instrument.** The eMoF reads `sample_tot_vol` (Zooscan) and `object_esd`; a
-  PlanktoScope export has `sample_total_volume`, `sample_concentrated_sample_volume`,
-  `sample_dilution_factor` and `object_equivalent_diameter` (pixels, with `process_pixel`). Volume,
-  concentration and size are therefore absent for project 4 until the owner confirms units and meaning; the
-  mapping belongs in `metadata/`, not guessed in code.
+- **Column names differ by instrument.** Zooscan exports `sample_tot_vol` and `object_esd`; a PlanktoScope
+  export has `sample_total_volume`, `sample_concentrated_sample_volume`, `sample_dilution_factor`,
+  `acq_imaged_volume` and `object_equivalent_diameter` (pixels, with `process_pixel`). `ecotaxa_volumes()`
+  handles both: for a PlanktoScope acquisition the seawater imaged is total × imaged / (concentrated ×
+  dilution), so concentration is count / that volume (about 43 L per acquisition for the 2023–24 64 µm
+  samples). The units come from the data dictionary and the owner's corrections
+  (`metadata/column_units.csv`), never from code, and a volume column without a known unit stops the build.
+  Size waits for the meaning of `process_pixel`.
+- **Volumes are withheld for project 4** (`volumes = withhold`): `volume_review()` flags most samples. The
+  200 µm samples carry dilution factors of 0.5 (two of −0.5, three near 0.98) where the owner expects 1,
+  and `sample_total_volume` runs from 0 to 23 million, with several 2021–22 samples near 2–155 that look
+  like m³ rather than L. Publishing those concentrations would put errors of 1,000× into OBIS.
+- **The owner's answers, 2026-11-11** are data, not edits to the export: the position of `ws21093_MR_64um`
+  (`metadata/sample_fixes.csv`), which also blanks its implausible `sample_total_volume` of 2,557,544,141 L;
+  creator, contact and annotators (`associated_parties` in `metadata/projects.csv`); CC BY 4.0, since NCEI
+  accepts no non-commercial license.
 - **Child events have no coordinates**: occurrences on acquisition events (738 for project 4) carry the
   `no_coordinates` warning; OBIS is expected to take them from the parent sample event, to confirm.
 - **Metadata per project** comes from `metadata/projects.csv`; a project without a row stops the build rather

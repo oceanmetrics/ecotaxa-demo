@@ -30,6 +30,9 @@ export_info <- fromJSON(file.path(DIR_EXPORT, "export.json"))
 meta        <- read_project_meta(here("metadata/projects.csv"), PROJECT_ID)
 project     <- ecotaxa_projects() |> filter(projid == PROJECT_ID)
 str(export_info)
+# NCEI accepts no non-commercial license: stop before packaging rather than after
+license_check(meta$license, "ncei")
+stopifnot(license_check(meta$license, "ncei")$level == "ok")
 ```
 
 ## Inputs: one project at one dated version
@@ -42,6 +45,14 @@ eml_path  <- file.path(DIR_DWCA, "eml.xml")
 stopifnot(file.exists(dwca_zip), file.exists(eml_path), length(tsv_paths) > 0)
 manifest  <- fromJSON(file.path(DIR_DWCA, paste0(DATASET_KEY, "_", VERSION, "_manifest.json")))
 cat(length(tsv_paths), "TSV files;", basename(c(dwca_zip, eml_path)), "\n")
+# the TSV columns described from NCEI's draft data dictionary, with the owner's unit corrections
+tsv_cols <- names(readr::read_tsv(tsv_paths[1], n_max = 0, show_col_types = FALSE))
+coldict  <- ecotaxa_column_dictionary(tsv_cols,
+  read_data_dictionary(here("metadata/ecotaxa_data_dictionary.csv")),
+  read_column_units(here("metadata/column_units.csv"), PROJECT_ID))
+coldict |> count(documented)
+# the exported columns the dictionary does not define yet: a list to send back to NCEI
+coldict |> filter(!documented) |> pull(field)
 ```
 
 ## Build the bag
@@ -49,7 +60,9 @@ cat(length(tsv_paths), "TSV files;", basename(c(dwca_zip, eml_path)), "\n")
 ```{r}
 #| label: build
 b <- ncei_package(DIR_NCEI, DATASET_KEY, VERSION, tsv_paths = tsv_paths, image_dir = export_info$image_dir,
-                  dwca_zip = dwca_zip, eml_path = eml_path,
+                  dwca_zip = dwca_zip, eml_path = eml_path, column_dictionary = coldict,
+                  metadata_files = here("metadata", c("sample_fixes.csv", "taxa_review.csv", "column_units.csv",
+                                                      paste0("taxa_lookup_project-", PROJECT_ID, ".csv"))),
                   dataset_json = list(
                     organization = meta$organization,
                     title = meta$title,
@@ -107,4 +120,9 @@ stopifnot(identical(v$finding, "ok"))
   by `scripts/render_project.sh`) keeps it off.
 - **One image per object**: exporting with `with_images = "first"` is what removed the duplicate second images
   of the Ifremer backup; an `"all"` export would bring them back into the bag.
+- **The data dictionary** NCEI is drafting (`metadata/ecotaxa_data_dictionary.csv`, saved 2026-11-12) becomes
+  the bag's `data/metadata/data_dictionary.csv`: each TSV column with its definition and unit, the owner's
+  unit where it differs (`sample_total_volume` is L, not mL), and `documented = FALSE` for the columns the
+  dictionary does not cover yet. The owner's corrections and the taxa review travel in the same folder, so
+  the archived TSVs (as exported) and the published tables (as corrected) can be reconciled.
 - Print counts and the first lines, never a million-line listing, into a rendered page.

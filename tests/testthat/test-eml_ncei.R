@@ -10,8 +10,38 @@ test_that("build_eml() carries title, parties, coverage and taxa; eml_check() fl
   expect_equal(xml2::xml_text(xml2::xml_find_first(doc, "./dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate")), "2014-07-01")
   expect_equal(length(xml2::xml_find_all(doc, "./dataset/coverage/taxonomicCoverage/taxonomicClassification")), 2L)
   expect_false(any(eml_check(doc)$level == "error"))
+  # the license as GBIF and the OBIS IPT read it
+  expect_equal(xml2::xml_attr(xml2::xml_find_first(doc, "./dataset/intellectualRights/para/ulink"), "url"),
+               "http://creativecommons.org/licenses/by/4.0/legalcode")
+  expect_match(xml2::xml_text(xml2::xml_find_first(doc, "./dataset/intellectualRights/para")),
+               "^This work is licensed under a Creative Commons Attribution \\(CC-BY\\) 4.0 License\\.$")
+  doc_nolic <- build_eml(modifyList(proj, list(license = "Not yet chosen")), ev, oc, meta = list(abstract = "x"))
+  expect_true("dataset/intellectualRights/para/ulink" %in% eml_check(doc_nolic)$element[eml_check(doc_nolic)$level == "error"])
   doc2 <- build_eml(proj, ev, oc)
   expect_true("dataset/abstract/para" %in% eml_check(doc2)$element[eml_check(doc2)$level == "error"])
+})
+test_that("build_eml() credits associated parties with their organization and role", {
+  o <- fixture_objects(); ev <- dwc_event(o, "p2"); oc <- dwc_occurrence(o, ev, lk, "p2")
+  doc <- build_eml(list(projid = 4, title = "t", license = "CC BY 4.0"), ev, oc, meta = list(
+    abstract = "a", contact_name = "Enrique Montes",
+    associated_parties = "Di Geronimo, Sebastian | University of South Florida | annotator"))
+  ap <- xml2::xml_find_all(doc, "./dataset/associatedParty")
+  expect_equal(length(ap), 1L)
+  expect_equal(xml2::xml_text(xml2::xml_find_first(ap[[1]], "./individualName/givenName")), "Sebastian")
+  expect_equal(xml2::xml_text(xml2::xml_find_first(ap[[1]], "./individualName/surName")), "Di Geronimo")
+  expect_equal(xml2::xml_text(xml2::xml_find_first(ap[[1]], "./role")), "annotator")
+  # EML 2.2 order: associatedParty after creator, before pubDate
+  kids <- xml2::xml_name(xml2::xml_children(xml2::xml_find_first(doc, "./dataset")))
+  expect_true(which(kids == "creator") < which(kids == "associatedParty") && which(kids == "associatedParty") < which(kids == "pubDate"))
+})
+test_that("ncei_package() writes the column dictionary and the decision files into data/metadata", {
+  d <- tempfile(); dir.create(d)
+  cd <- tibble::tibble(field = "object_id", category = "Object details", definition = "id", unit = NA, documented = TRUE, unit_source = NA)
+  b <- ncei_package(file.path(d, "out"), "p4", "2026-11-12", tsv_paths = fixture("export_small.tsv"),
+                    column_dictionary = cd, metadata_files = file.path(root, "metadata/sample_fixes.csv"))
+  expect_true(file.exists(file.path(b$bag, "data/metadata/data_dictionary.csv")))
+  expect_true(file.exists(file.path(b$bag, "data/metadata/sample_fixes.csv")))
+  expect_equal(ncei_verify(b$bag)$finding, "ok")
 })
 test_that("ncei_package() builds a verifiable bag and ncei_verify() catches tampering", {
   d <- tempfile(); dir.create(d)
@@ -34,7 +64,8 @@ test_that("read_project_meta() returns one project's row and stops on a project 
   p <- file.path(root, "metadata/projects.csv")
   m4 <- read_project_meta(p, 4)
   expect_equal(m4$contact_email, "enrique.montes@noaa.gov")
-  expect_match(m4$license, "Not yet chosen")
+  expect_equal(m4$license, "CC BY 4.0")
+  expect_equal(nrow(parse_parties(m4$associated_parties)), 3L)
   expect_equal(read_project_meta(p, 2L)$contact_name, "Ben Best")
   expect_error(read_project_meta(p, 999), "0 rows for project 999")
 })

@@ -27,23 +27,39 @@ build_eml <- function(project, event, occurrence, meta = list(), package_id = NU
   party <- function(parent, tag) {
     p <- xml2::xml_add_child(parent, tag)
     if (!is.na(contact_name)) {
-      nm <- xml2::xml_add_child(p, "individualName")
-      toks <- strsplit(contact_name, " ")[[1]]
-      if (length(toks) > 1) xml2::xml_add_child(nm, "givenName", paste(toks[-length(toks)], collapse = " "))
-      xml2::xml_add_child(nm, "surName", toks[length(toks)])
+      nm <- xml2::xml_add_child(p, "individualName"); pn <- split_person_name(contact_name)
+      if (!is.na(pn$given)) xml2::xml_add_child(nm, "givenName", pn$given)
+      xml2::xml_add_child(nm, "surName", pn$sur)
     }
     xml2::xml_add_child(p, "organizationName", org)
     if (!is.na(contact_email)) xml2::xml_add_child(p, "electronicMailAddress", contact_email)
     p
   }
   party(ds, "creator")
+  # others credited, from projects.csv associated_parties ("Name | Organization | role; ...")
+  parties <- parse_parties(meta$associated_parties %||% project$associated_parties)
+  for (i in seq_len(nrow(parties))) {
+    ap <- xml2::xml_add_child(ds, "associatedParty"); nm <- xml2::xml_add_child(ap, "individualName")
+    pn <- split_person_name(parties$name[i])
+    if (!is.na(pn$given)) xml2::xml_add_child(nm, "givenName", pn$given)
+    xml2::xml_add_child(nm, "surName", pn$sur)
+    xml2::xml_add_child(ap, "organizationName", parties$organization[i])
+    xml2::xml_add_child(ap, "role", parties$role[i])
+  }
   xml2::xml_add_child(ds, "pubDate", format(Sys.Date()))
   xml2::xml_add_child(ds, "language", "eng")
   ab <- xml2::xml_add_child(ds, "abstract"); xml2::xml_add_child(ab, "para", if (is.na(abstract)) "" else abstract)
   kw <- xml2::xml_add_child(ds, "keywordSet")
   for (k in c("plankton imagery", "EcoTaxa", g("instrument", "imaging instrument"), "Occurrence"))
     xml2::xml_add_child(kw, "keyword", k)
-  ir <- xml2::xml_add_child(ds, "intellectualRights"); xml2::xml_add_child(ir, "para", if (is.na(license)) "" else license)
+  ir <- xml2::xml_add_child(ds, "intellectualRights")
+  li <- if (is.na(license)) NULL else license_info(license)
+  if (is.null(li)) xml2::xml_add_child(ir, "para", if (is.na(license)) "" else license) else {
+    # the sentence and link GBIF and the OBIS IPT recognise as a machine-readable license
+    # (url and title come from LICENSES, not from user text, so no escaping is needed)
+    xml2::xml_add_child(ir, xml2::read_xml(sprintf(
+      '<para>This work is licensed under a <ulink url="%s"><citetitle>%s</citetitle></ulink>.</para>', li$url, li$title)))
+  }
   cov <- xml2::xml_add_child(ds, "coverage")
   if (any(!is.na(lat)) && any(!is.na(lon))) {
     gc <- xml2::xml_add_child(cov, "geographicCoverage")
@@ -86,6 +102,10 @@ eml_check <- function(doc) {
     present <- !inherits(n, "xml_missing") && (length(xml2::xml_children(n)) > 0 || nzchar(trimws(xml2::xml_text(n))))
     tibble::tibble(element = x, present = present, level = ifelse(present, "ok", "error"))
   })
+  # the license must be one OBIS accepts, linked as GBIF expects
+  lic <- !inherits(xml2::xml_find_first(doc, "./dataset/intellectualRights/para/ulink"), "xml_missing")
+  f[[length(f) + 1]] <- tibble::tibble(element = "dataset/intellectualRights/para/ulink", present = lic,
+                                       level = ifelse(lic, "ok", "error"))
   dplyr::bind_rows(f)
 }
 write_eml <- function(doc, path) { xml2::write_xml(doc, path); invisible(path) }

@@ -1,0 +1,94 @@
+Field,Descriptive Category,Definition,Units,Status (DELETE THIS COLUMN BEFORE SUBMITTING)
+img_file_name,"local path of the image corresponding to the taxon, named according to the object id",The name of the image file,N/A,
+img_rank,Acquisition details,"Rank of image to be displayed, in case of existence of multiple (<10) images for one object. Starts at 0.",N/A,
+object_id,Object details,Unique identifier for the object,N/A,
+object_lat,Object details,Latitude location where the sample was taken,decimal degrees North,
+object_lon,Object details,Longitude location where the sample was taken,decimal degrees East,
+object_date,Object details,Date the sample was taken,"YYYYmmDD format, where YYYY represents the four-digit year, mm represents the two-digit month, and DD represents the two-digit day.",
+object_time,Object details,Time the sample was taken,"HHMMSS format, where HH represents the two-digit-hour, MM represents the minutes, and SS represents the seconds.",
+object_link,Object details,"Link to description of object, if provided",N/A,
+object_depth_min,Object details,Minimum depth at which the sample was collected.,meters,
+object_depth_max,Object details,Maximum depth at which the sample was collected.,meters,
+object_annotation_status,classification,"How an object was annotated. Controlled terms include: ""predicted,"" meaning the model described in the process fields predicted the identity of an image; ""validated,"" meaning a human has validated this annotation; ""dubious,"" a human identified this annotation as questionable; and ""unclassified,"" meaning the image was not run through the model, therefore the model has not predicted the taxonomic or descriptor assignment of the object.",N/A,
+object_annotation_person_name,classification,Person who did the annotating. Typically populated when annotation_status = validated.,N/A,
+object_annotation_person_email,classification,email for annotator. Typically populated when object_annotation_status = validated.,N/A,
+object_annotation_date,classification,date the object was annotated. Typically populated when annotation_status = validated.,,
+object_annotation_time,classification,time the object was annotated. Typically populated when annotation_status = validated.,,
+object_annotation_category,classification,Name of the taxon,N/A,
+object_annotation_category_id,classification,Unique identifier for the category descriptive information.,N/A,
+object_label,Object details,Incremental numerical identifier for an object label.,N/A,
+object_width,Object details,Width of the smallest rectangle enclosing the object,pixels,
+object_height,Object details,Height of the smallest rectangle enclosing the object,pixels,
+object_bx,Object details,X coordinates of the top left point of the smallest rectangle enclosing the object,pixels,
+object_by,Object details,Y coordinates of the top left point of the smallest rectangle enclosing the object,pixels,
+object_circ.,Object details,Circularity of the object ((4∗π ∗Area)/Perim^2) ,0-1 (unitless),DONE
+object_area_exc,Object details,Surface area of the object excluding holes ,pixel^2,DONE
+object_area,Object details,Area of object.,pixel^2,DONE
+object_%area,Object details,Object occupies this percent,percent,
+object_major,Object details,Length of the primary axis of the best fitting ellipse for the object,pixel,DONE
+object_minor,Object details,Length of the secondary axis of the best fitting ellipse for the object,pixel,DONE
+object_y,Object details,Y position of the center of gravity of the object,pixel,DONE
+object_x,Object details,X position of the center of gravity of the object,pixel,DONE
+object_convex_area,Object details,The area of the smallest polygon within which all points in the object fit,pixel^2,DONE
+object_perim.,Object details,The length of the outside boundary of the object,pixel,DONE
+object_elongation,Object details,Elongation index (major/minor) ,unitless,DONE
+object_perimareaexc,Object details,Index of the relative complexity of the perimeter (perim/area_exc),pixel^-1 (per pixel),DONE
+object_perimmajor,Object details,Index of the relative complexity of the perimeter (perim/major),unitless,DONE
+object_circex,Object details,Circularity of object excluding white pixels ((4 ∗ π ∗ Area_exc)/perim 2),unitless,DONE
+object_angle,Object details,Angle between the primary axis and a line parallel to the x-axis of the image,radians,DONE
+object_bounding_box_area,Object details,Area of the smallest box containing the object,pixel^2,DONE
+object_eccentricity,Object details,Eccentricity of the ellipse that has the same second-moments as the region. Ratio of the focal distance of the ellipse over the major axis length,0-1 (unitless),DONE
+object_equivalent_diameter,Object details,Approximated diameter using equivalent spherical diameter,pixel,DONE
+object_euler_number,Object details,total number of connected objects minus the number of holes inside those objects,N/A,
+object_extent,Object details,Ratio of pixels in the object to pixels in the total bounding box,unitless,DONE
+object_local_centroid_col,Object details,Horizontal coordinate of the center of mass of the object ,pixel,DONE
+object_local_centroid_row,Object details,Vertical coordinate of the center of mass of the object ,pixel,DONE
+object_solidity,Object details,Ratio of pixels in the object to pixels of the convex hull image (area / convex_area),unitless,DONE
+object_meanhue,Object details,Mean base color of the object in hue scale,0-360 (unitless),DONE
+object_meansaturation,Object details,Mean saturation of the object,0-100 (unitless),DONE
+object_meanvalue,Object details,Mean brightness of the object,0-100 (unitless),DONE
+object_stdhue,Object details,Standard deviation of base color,unitless,DONE
+object_stdsaturation,Object details,Standard deviation of saturation ,unitless,DONE
+object_stdvalue,Object details,Standard deviation of brightness,unitless,DONE
+sample_id,Sample details,unique identifier for sample,N/A,
+sample_dataportal_descriptor,Sample details,"A description of the sample, if provided in data portal.",N/A,
+sample_project,Sample details,project identifier,N/A,
+sample_ship,Sample details,ship that was used to collect images,N/A,
+sample_operator,Sample details,ship operator,N/A,
+sample_sampling_gear,Sample details,type of sampling equipment,N/A,
+sample_speed_through_water,Sample details,Net tow speed,kn,
+sample_gear_net_opening,Sample details,size of net opening for sample gear,cm,
+sample_uuid,Sample details,Unique identifier for the sample,N/A,
+sample_concentrated_sample_volume,Sample details,Concentrated volume of the sample,mL,
+sample_dilution_factor,Sample details,The factor of dilution for the sample,N/A,
+sample_total_volume,Sample details,Total volume of the sample,mL,
+process_id,Processing details,unique identifier for the identification,N/A,
+process_pixel,Processing details,The pixel on which the process was conducted,N/A,
+process_source,Processing details,"Documentation of the processing used for annotions, free text",N/A,
+process_datetime,Processing details,"Date and time when process step was run, following the ISO 8601 standard.","YYYY-mm-DDTHH:MM:SS, where YYYY represents the four-digit year, mm represents the two-digit month, DD represents the two-digit day, HH represents the two-digit hour, MM represents the two-digit minute, and SS represents the two-digit second.",
+process_uuid,Processing details,Unique identifier for process step,N/A,
+process_1st_operation,Processing details,identification process,,
+process_2nd_operation,Processing details,identification process,,
+process_3rd_operation,Processing details,identification process,,
+process_4th_operation,Processing details,identification process,,
+process_5th_operation,Processing details,identification process,,
+process_6th_operation,Processing details,identification process,,
+process_7th_operation,Processing details,identification process,,
+acq_id,Acquisition details,unique identifier for image acquisition,N/A,
+acq_instrument,Acquisition details,instrument type,N/A,
+acq_instrument_id,Acquisition details,Local identifier for the specific instrument.,N/A,
+acq_celltype,Acquisition details,"Flow cell size in the Z dimension (300, 500, 800, etc)",um,DONE
+acq_minimum_mesh,Acquisition details,Maximum mesh size,um,
+acq_maximum_mesh,Acquisition details,Minimum mesh size,um,
+acq_volume,Acquisition details,Volume of water collected,mL,
+acq_imaged_volume,Acquisition details,Volume of water imaged,mL,
+acq_magnification,Acquisition details,Magnification used during acquisition,unitless,DONE
+acq_fnumber_objective,Acquisition details,f-number,unitless,DONE
+acq_camera,Acquisition details,Type of camera used for image acquisition.,N/A,
+acq_nb_frame,Acquisition details,Number of frames or full images collected,unitless,DONE
+acq_software,Acquisition details,Software package used to capture the image/object.,N/A,
+acq_local_datetime,Acquisition details,"Local date time of image acquisition, following the ISO 8601 standard.","YYYY-mm-DDTHH:MM:SS, where YYYY represents the four-digit year, mm represents the two-digit month, DD represents the two-digit day, HH represents the two-digit hour, MM represents the two-digit minute, and SS represents the two-digit second.",
+acq_camera_resolution,Acquisition details,Resolution of camera,Pixel dimensions (eg. 4056x3040),
+acq_camera_iso,Acquisition details,Camera image brightness factor,N/A,
+acq_camera_shutter_speed,Acquisition details,Shutter speed of camera.,seconds,
+acq_uuid,Acquisition details,Unique identifier for the PlanktoScope unit used,N/A,DONE

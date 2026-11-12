@@ -1,0 +1,4 @@
+project_id,sample_id,field,value,source
+4,ws21093_MR_64um,object_lat,25.0038,"Enrique Montes, 2026-11-11 (0,0 in the Ifremer backup)"
+4,ws21093_MR_64um,object_lon,-80.3757,"Enrique Montes, 2026-11-11 (0,0 in the Ifremer backup)"
+4,ws21093_MR_64um,sample_total_volume,,"2,557,544,141 L in the Ifremer backup is not a plausible net volume (the other samples hold about 20,000 to 40,000 L); unknown until the owner gives it"
