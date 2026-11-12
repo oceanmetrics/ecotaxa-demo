@@ -1,0 +1,106 @@
+sample_id,n_acq,sample_total_volume,sample_concentrated_sample_volume,sample_dilution_factor,acq_imaged_volume,imaged_m3,finding
+sfer_mbon_hg26045_lk_200um_20260218,3,25879.978308473994,250,0.9866,1.0404,0.3275,dilution factor not 1
+sfer_mbon_hg26045_mr_200um_20260217,3,38227.11518,350,0.98,1.0404,0.3479,dilution factor not 1
+sfer_mbon_hg26045_ws_200um_20260218,3,26206.7057886,175,0.9866,1.0404,0.4738,dilution factor not 1
+sfer_mbon_hg26081_lk_200um_20260327,3,31307.87,125,0.5,1.0404,1.563,dilution factor not 1
+sfer_mbon_hg26081_mr_200um_20260327,3,23903.8,200,0.5,1.0404,0.7461,dilution factor not 1
+sfer_mbon_hg26081_ws_200um_20260328,3,27698.05,100,0.5,1.0404,1.729,dilution factor not 1
+sfer_mbon_hg26137_lk_200um_20260521,3,,150,0.5,1.2138,,a volume input is missing; dilution factor not 1
+sfer_mbon_hg26137_mr_200um_20260521,3,13248.27,125,0.5,1.2138,0.7719,dilution factor not 1
+sfer_mbon_hg26137_ws_200um_20260521,3,19250.57,75,0.5,1.2138,1.869,dilution factor not 1
+sfer_mbon_sv18067_lk_200um_20180309,3,14426.9,80,0.5,1.0404,1.126,dilution factor not 1
+sfer_mbon_sv18067_ws_200um_20180309,3,9616.316938,125,0.5,1.0404,0.4802,dilution factor not 1
+sfer_mbon_sv18173_lk_200um_20180623,3,89500,50,0.5,1.0404,11.17,dilution factor not 1
+sfer_mbon_ws15103_lk_200um_20150414,3,628000,200,0.5,1.2138,22.87,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws15103_mr_200um_20150413,3,823000,400,0.5,1.2138,14.98,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws15103_ws_200um_20150414,3,53000,150,0.5,1.0404,2.206,dilution factor not 1
+sfer_mbon_ws15148_lk_200um_20150602,3,481000,200,0.5,1.2138,17.52,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws15148_mr_200um_20150601,3,97000,350,0.5,1.2138,2.018,dilution factor not 1
+sfer_mbon_ws15208_lk_200um_20150728,3,48312.49,500,0.5,1.2138,0.7037,dilution factor not 1
+sfer_mbon_ws15208_mr_200um_20150727,3,46157.36,200,0.5,1.2138,1.681,dilution factor not 1
+sfer_mbon_ws15208_ws_200um_20150728,3,4584.467,175,0.5,1.2138,0.1908,dilution factor not 1
+sfer_mbon_ws15264_lk_200um_20150922,3,7249.52,150,0.5,1.2138,0.352,dilution factor not 1
+sfer_mbon_ws15264_mr_200um_20150921,3,48105.64,75,0.5,1.2138,4.671,dilution factor not 1
+sfer_mbon_ws15320_mr_200um_20151116,3,9664.42,175,-0.5,1.2138,,dilution factor not positive
+sfer_mbon_ws15320_ws_200um_20151117,3,48581.88,250,-0.5,1.2138,,dilution factor not positive
+sfer_mbon_ws16004_mr_200um_20160104,3,35.10268,175,0.5,1.0404,0.001252,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws16074_lk_200um_20160301,3,4805.75,300,0.5,1.2138,0.1167,dilution factor not 1
+sfer_mbon_ws16074_mr_200um_20160314,3,54946.26,200,0.5,1.2138,2.001,dilution factor not 1
+sfer_mbon_ws16074_ws_200um_20160301,3,0,300,0.5,1.0404,0,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws16130_mr_200um_20160509,3,33.1255,100,0.5,1.0404,0.002068,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws16130_ws_200um_20160510_real,1,98380,35,0.5,1.0404,5.849,dilution factor not 1
+sfer_mbon_ws16207_mr_200um_20160725,3,3223.078,100,0.5,1.2138,0.2347,dilution factor not 1
+sfer_mbon_ws16207_ws_200um_20160726,1,47600,200,0.5,1.0404,0.4952,dilution factor not 1
+sfer_mbon_ws17086_lk_200um_20170328,3,52000,150,0.5,1.0404,2.164,dilution factor not 1
+sfer_mbon_ws17086_mr_200um_20170327,3,16639.7,50,0.5,1.2138,2.424,dilution factor not 1
+sfer_mbon_ws17282_ws_200um_20171010,3,15567,125,0.5,1.2138,0.907,dilution factor not 1
+sfer_mbon_ws18008_mr_200um_20180109,3,42135.73,125,0.5,1.2138,2.455,dilution factor not 1
+sfer_mbon_ws18218_lk_200um_20180718,3,22938175,75,0.5,1.0404,1909,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws18218_mr_200um_20180806,3,4853.859,100,0.5,1.2138,0.3535,dilution factor not 1
+sfer_mbon_ws18285_lk_200um_20181013,3,19867.63,500,0.5,1.2138,0.2894,dilution factor not 1
+sfer_mbon_ws18285_mr_200um_20181012,3,29.62826,350,0.5,1.0404,5.284e-4,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws19028_mr_200um_20190128,3,19.69,150,0.5,1.0404,8.194e-4,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws19028_ws_200um_20190129,3,14.302,200,0.5,1.0404,4.464e-4,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws19210_lk_200um_20190730,3,238100,125,0.5,1.0404,11.89,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws19210_ws_200um_20190730,3,4.853858825,200,0.5,1.0404,1.515e-4,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws19266_lk_200um_20190924,3,22938175,250,0.5,1.0404,572.8,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws19266_ws_200um_20190924,3,8471.4,75,0.5,1.2138,0.8226,dilution factor not 1
+sfer_mbon_ws20006_lk_200um_20200107,3,6188650,125,0.5,1.0404,309.1,dilution factor not 1; total volume more than 10x off the project median (20430)
+sfer_mbon_ws20230_lk_200um_20200819,3,22.29696299,300,0.5,1.0404,4.64e-4,dilution factor not 1; total volume more than 10x off the project median (20430)
+ws21093_MR_64um,2,,700,1,1.0557,,a volume input is missing
+ws21277_LK_64um,2,1.7,,1,1.0557,,a volume input is missing; total volume more than 10x off the project median (20430)
+ws21277_MR_64um,3,96.8,,1,"0.4751, 1.0557",,a volume input is missing; total volume more than 10x off the project median (20430)
+ws21277_WS_64um,2,33.2,450,1,1.0557,1.558e-4,total volume more than 10x off the project median (20430)
+ws21338_LK_64um,2,27.6,505,1,1.0557,1.154e-4,total volume more than 10x off the project median (20430)
+ws21338_MR_64um,3,29.8,330,1,"0.1056, 0.9501, 1.0557",1.907e-4,total volume more than 10x off the project median (20430)
+ws21338_WS_64um,3,23.9,,1,"0.5278, 1.0557",,a volume input is missing; total volume more than 10x off the project median (20430)
+ws22022_LK_64um,2,15,425,1,1.0557,7.452e-5,total volume more than 10x off the project median (20430)
+ws22022_MR_64um,2,2.4,440,1,"0.4223, 1.0557",8.062e-6,total volume more than 10x off the project median (20430)
+ws22022_WS_64um,2,25.9,350,1,1.0557,1.562e-4,total volume more than 10x off the project median (20430)
+ws22072_54_64um,1,6.1,295,1,1.0557,2.183e-5,total volume more than 10x off the project median (20430)
+ws22072_57_64um,2,26.6,425,1,1.0557,1.321e-4,total volume more than 10x off the project median (20430)
+ws22072_LK_64um,2,37.9,320,1,1.0557,2.501e-4,total volume more than 10x off the project median (20430)
+ws22072_MR_64um,2,34.2,305,1,1.0557,2.368e-4,total volume more than 10x off the project median (20430)
+ws22072_WS_64um,3,25.5,445,1,1.0557,1.815e-4,total volume more than 10x off the project median (20430)
+ws22141_MR_64um,2,39.3,325,1,1.0557,2.553e-4,total volume more than 10x off the project median (20430)
+ws22141_WS_64um,2,39.6,415,1,1.0557,2.015e-4,total volume more than 10x off the project median (20430)
+ws22281_LK_64um,2,30.3,700,1,1.0557,9.139e-5,total volume more than 10x off the project median (20430)
+ws22281_MR_64um,3,18.9,445,1,1.0557,1.345e-4,total volume more than 10x off the project median (20430)
+ws22281_WS_64um,2,30.4,370,1,1.0557,1.735e-4,total volume more than 10x off the project median (20430)
+ws22337_54_64um,4,4,375,1,1.0557,4.504e-5,total volume more than 10x off the project median (20430)
+ws22337_57_64um,3,43.2,455,1,1.0557,3.007e-4,total volume more than 10x off the project median (20430)
+ws22337_LK_64um,2,43.3,300,1,1.0557,3.047e-4,total volume more than 10x off the project median (20430)
+ws22337_MR_64um,2,35.4,280,1,1.0557,2.669e-4,total volume more than 10x off the project median (20430)
+ws22337_WS_64um,5,28.7,380,1,1.0557,3.987e-4,total volume more than 10x off the project median (20430)
+ws23203_LK_64um,2,31000,380,,0.6242,0.1018,dilution factor missing (1 assumed)
+ws23203_MR_64um,2,49500,332,,0.6242,0.1861,dilution factor missing (1 assumed)
+ws23203_WS_64um,2,38400,510,,0.6242,0.094,dilution factor missing (1 assumed)
+ws23259_LK_64um,2,16000,430,,0.6242,0.04645,dilution factor missing (1 assumed)
+ws23259_MR_64um,2,50000,420,,0.6242,0.1486,dilution factor missing (1 assumed)
+ws23259_WS_64um,2,27000,471,,0.6242,0.07156,dilution factor missing (1 assumed)
+ws24205_BG20_64um,4,154.8,659,1,1.0557,9.919e-4,total volume more than 10x off the project median (20430)
+ws24258_MR_64um,2,23.6,285,1,1.0557,1.748e-4,total volume more than 10x off the project median (20430)
+ws24258_WS_64um,2,27.1,300,1,"0.6334, 1.0557",1.526e-4,total volume more than 10x off the project median (20430)
+h23138_LK_64um,2,40300,584,1,0.6242,0.08615,
+h23138_MR_64um,2,19600,542,1,0.6242,0.04515,
+h23138_WS_64um,2,22400,465,1,0.6242,0.06014,
+h24013_LK_64um,2,29200,326,1,0.6242,0.1118,
+h24013_MR_64um,2,21700,291,1,0.6242,0.09309,
+h24013_WS_64um,2,40600,317,1,0.6242,0.1599,
+h24062_LK_64um,2,29300,490,1,0.6242,0.07465,
+h24062_MR_64um,2,33900,496,1,0.6242,0.085319999999999993,
+h24062_WS_64um,2,33700,540,1,0.6242,0.07791,
+sfer_mbon_ws17170_ws_200um_20170620,3,40900,80,1,1.0404,1.596,
+ws23011_LK_64um,3,65000,615,1,0.6242,0.1979,
+ws23011_MR_64um,4,30700,860,1,0.6242,0.08913,
+ws23011_WS_64um,3,55300,502,1,0.6242,0.2063,
+ws23061_LK_64um,2,41900,435,1,0.6242,0.1202,
+ws23061_MR_64um,2,37500,295,1,0.6242,0.1587,
+ws23061_ws_64um,2,37000,320,1,0.6242,0.1443,
+ws24139_LK_64um,2,37000,197,1,0.6242,0.2345,
+ws24139_MR_64um,2,29400,366,1,0.6242,0.1003,
+ws24139_WS_64um,2,26200,200,1,0.6242,0.1635,
+ws24205_LK_64um,2,21000,281,1,0.6242,0.0933,
+ws24205_MR_64um,2,29300,336,1,0.6242,0.1089,
+ws24205_WS_64um,2,36900,307,1,0.6242,0.1501,
+ws24258_LK_64um,2,16500,185,1,0.8594,0.1533,

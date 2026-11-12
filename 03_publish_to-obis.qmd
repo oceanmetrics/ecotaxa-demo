@@ -56,12 +56,12 @@ coldict |> count(documented)
 
 The volume fields per sample, with what needs the owner's confirmation. Until `volumes` is `publish` in
 `metadata/projects.csv`, sampled volume, imaged volume and concentration stay out of the archive; the
-table is written to `data/` so it can go to the owner.
+table is committed as `metadata/volume_review_project-<id>.csv` so it can go to the owner.
 
 ```{r}
 #| label: volumes
 vrev <- volume_review(objects, coldict)
-write_csv(vrev, file.path(DIR_EXPORT, paste0("volume_review_project-", PROJECT_ID, ".csv")), na = "")
+write_csv(vrev, here("metadata", paste0("volume_review_project-", PROJECT_ID, ".csv")), na = "")
 cat("volumes:", meta$volumes, "\n")
 vrev |> count(has_finding = nzchar(finding))
 vrev |> filter(nzchar(finding)) |> head(40)
